@@ -19,27 +19,49 @@ dp = Dispatcher(bot)
 '''КЛИЕНТСКАЯ ЧАСТЬ'''
 num = 0
 # кнопка начать
+get_attach_kb = InlineKeyboardMarkup().add(InlineKeyboardButton('➡️  Продолжить', callback_data='attach_0_0'))
+
+contract_btn = [InlineKeyboardButton("✖️ Я прочитал и принимаю условия договора", callback_data='attach_1_0'),
+                InlineKeyboardButton("✅ Я прочитал и принимаю условия договора", callback_data='nope'),
+                InlineKeyboardButton("✖️ Я подтверждаю согласие на обработку персональных данных",
+                                     callback_data='attach_1_1'),
+                InlineKeyboardButton("✅ Я подтверждаю согласие на обработку персональных данных", callback_data='nope')]
+
 start_button = InlineKeyboardMarkup().add(InlineKeyboardButton('🚀 Начать', callback_data='run'))
 
 # кнопка перехода в меню
 go_to_menu = InlineKeyboardMarkup().add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
 # лист с кнопками основного меню
-list_main_btn = [InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
+list_main_btn = [InlineKeyboardButton('👤 Мой кабинет', callback_data='user_account'),
+                 InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
                  InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
+                 InlineKeyboardButton('⚙️ Техподдержка', callback_data='support'),
                  InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
                  InlineKeyboardButton('⚙️ Кабинет администратора', callback_data='admin')]
 
 # admin kb
 admin_kb = InlineKeyboardMarkup(row_width=1)
+admin_kb.add(InlineKeyboardButton('⚙️ Показать психологов', callback_data='show_psycho'))
 admin_kb.add(InlineKeyboardButton('⚙️ Добавить психолога в команду', callback_data='add'))
+admin_kb.add(InlineKeyboardButton('⚙️ Удалить психолога из команды', callback_data='del_psy'))
 admin_kb.add(InlineKeyboardButton('⚙️ Сделать рассылку', callback_data='alll'))
 admin_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
 # psychologist kb
 psycho_kb = InlineKeyboardMarkup(row_width=1)
+psycho_kb.add(InlineKeyboardButton('⚙️ Текущие консультации', callback_data='my_consults'))
 psycho_kb.add(InlineKeyboardButton('⚙️ Добавить слоты на неделю', callback_data='slot'))
-psycho_kb.add(InlineKeyboardButton('⚙️ Удалить слот', callback_data='del_slot'))
+psycho_kb.add(InlineKeyboardButton('⚙️ Удалить слот', callback_data='remove_slot'))
+
+support_kb = InlineKeyboardMarkup(row_width=1)
+support_kb.add(InlineKeyboardButton("👤 По вопросам работы психологов", callback_data='sup_psy'))
+support_kb.add(InlineKeyboardButton("🤖 По вопросам работы бота", callback_data='sup_bot'))
+support_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
+
+user_acc_kb = InlineKeyboardMarkup(row_width=1)
+user_acc_kb.add(InlineKeyboardButton('💌 Связаться с психологом', callback_data='text_to_psy'))
+user_acc_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
 # TODO: подписать выбор из спика нескольких
 # TODO: смайлик средний поменять, в одиночестве подписать сегодня, реверс графиков, убрать сохранение картинок
@@ -103,7 +125,38 @@ async def command_start(message: types.Message):
     await bot.send_message(message.from_user.id,
                            'Привет, мы очень рады видеть тебя в нашем боте! Давай пройдем короткую регистрацию, '
                            'после чего ты сможешь полноценно пользоваться услугами нашего бота ❤️',
-                           reply_markup=start_button)
+                           reply_markup=get_attach_kb)
+
+
+# get attachments
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('attach'))
+async def attach(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    data = callback_query.data.split('_')
+    kb = InlineKeyboardMarkup()
+    if int(data[1]) == 0 and int(data[2]) == 0:
+        kb.add(contract_btn[0])
+        await bot.send_document(callback_query.from_user.id, open("contract.docx", "rb"),
+                                caption="Подтвердите, что вы ознакомились с договором и принимаете его условия",
+                                reply_markup=kb)
+    if int(data[1]) == 1 and int(data[2]) == 0:
+        kb.add(contract_btn[1])
+        await bot.send_document(callback_query.from_user.id, open("contract.docx", "rb"),
+                                caption="Подтвердите, что вы ознакомились с договором и принимаете его условия",
+                                reply_markup=kb)
+
+        kb = InlineKeyboardMarkup()
+        kb.add(contract_btn[2])
+        await bot.send_document(callback_query.from_user.id, open("personal_data.docx", "rb"),
+                                caption="Подтвердите, что вы соглашаетесь на обработку персональных данных",
+                                reply_markup=kb)
+    if int(data[1]) == 1 and int(data[2]) == 1:
+        kb.add(contract_btn[3])
+        await bot.send_document(callback_query.from_user.id, open("personal_data.docx", "rb"),
+                                caption="Подтвердите, что вы соглашаетесь на обработку персональных данных",
+                                reply_markup=kb)
+        await bot.send_message(callback_query.from_user.id, "Отлично, теперь можем продолжить!", reply_markup=start_button)
 
 
 # регистрация пользователя, если его еще нет в базе данных
@@ -162,6 +215,45 @@ async def admin_page(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, 'Кабинет администратора', reply_markup=admin_kb)
 
 
+# admin show psycho
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('show_psycho'))
+async def show_psycho(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    with con:
+        lst = list(con.execute(f"SELECT id, name FROM Psychologist"))
+
+    for x in lst:
+        btn = InlineKeyboardMarkup()
+        btn.add(InlineKeyboardButton('Показать проведенные консультации', callback_data='show_consult_' + str(x[0])))
+        await bot.send_message(callback_query.from_user.id, str(x[1]), reply_markup=btn)
+    await bot.send_message(callback_query.from_user.id, "go back", reply_markup=go_to_menu)
+
+
+# admin show psycho consultations
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('show_consult_'))
+async def show_psycho_consultations(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    psy_id = callback_query.data.split('_')[-1]
+
+    with con:
+        lst = list(con.execute(f"SELECT slot_id FROM Consultation WHERE is_done='1'"))
+
+    st = "Проведенные консультации:\n"
+    for x in lst:
+        with con:
+            data = list(con.execute(f"SELECT date, time FROM Slot WHERE psycho_id={psy_id} and id={x[0]}"))
+            print(data)
+        if data[0][0] is not None:
+            st += str(data[0][0]) + " " + str(data[0][1]) + "\n"
+    await bot.send_message(callback_query.from_user.id, st, reply_markup=go_to_menu)
+
+
 # admin add psychologist
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('add'))
 async def admin_add_psycho(callback_query: types.CallbackQuery):
@@ -171,6 +263,16 @@ async def admin_add_psycho(callback_query: types.CallbackQuery):
                            'add/<telegram id>/<ФИО>/<Список проблем, с которыми работает психолог(через запятую)>/'
                            '<О псилогоге>\nПосле этого необходимо отправить фото просто в бота, программа сама '
                            'добавит его в профиль психолога')
+    await bot.send_message(callback_query.from_user.id,
+                           'Если кнопка нажата по ошибке, то просто перейдите в главное меню', reply_markup=go_to_menu)
+
+
+# admin del psychologist
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('del'))
+async def admin_add_psycho(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+    await bot.send_message(callback_query.from_user.id, 'Отправить данные одним сообщением вида:')
+    await bot.send_message(callback_query.from_user.id, 'del/<telegram id>')
     await bot.send_message(callback_query.from_user.id,
                            'Если кнопка нажата по ошибке, то просто перейдите в главное меню', reply_markup=go_to_menu)
 
@@ -201,6 +303,74 @@ async def psycho_page(callback_query: types.CallbackQuery):
                            'slot/гггг-мм-дд xx:xx/гггг-мм-дд xx:xx/гггг-мм-дд xx:xx и так далее')
     await bot.send_message(callback_query.from_user.id,
                            'Если кнопка нажата по ошибке, то просто перейдите в главное меню', reply_markup=go_to_menu)
+
+
+# psycho select slot that have to remove
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('remove_slot'))
+async def del_slot(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    with con:
+        lst_slot = list(con.execute(f"SELECT date, time, id FROM Slot WHERE "
+                                    f"psycho_id={callback_query.from_user.id} and is_free={1}"))
+
+    await bot.send_message(callback_query.from_user.id, "Ваши слоты, которые еще не заняты:", reply_markup=None)
+
+    for x in lst_slot:
+        btn = InlineKeyboardMarkup()
+        btn.add(InlineKeyboardButton("Удалить слот", callback_data='rem_slot_' + str(x[2])))
+        await bot.send_message(callback_query.from_user.id, str(x[0]) + " " + str(x[1]), reply_markup=btn)
+
+    await bot.send_message(callback_query.from_user.id,
+                           "Если кнопка нажата по ошибке, то просто перейдите в главное меню", reply_markup=go_to_menu)
+
+
+# psycho del slot
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('rem_slot_'))
+async def del_slot(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    slot_id = callback_query.data.split('_')[-1]
+
+    with con:
+        con.execute(f"DELETE from Slot WHERE id={slot_id};")
+
+    await bot.send_message(callback_query.from_user.id, "Слот успешно удален!", reply_markup=go_to_menu)
+
+
+# support
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('support'))
+async def support(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    await callback_query.message.answer_photo(open("support.png", "rb"),
+                                              caption="Пожалуйста, выберите тему обращения ❤", reply_markup=support_kb)
+
+
+# support bot
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('sup_bot'))
+async def sup_bot(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    await callback_query.message.answer_photo(open("support.png", "rb"),
+                                              caption="Опишите свой вопрос максимально подробно!\nОтправьте "
+                                                      "сообщение вида:\nsup_bot/<ваш вопрос>\nВ противном случае, "
+                                                      "наша команда не сможет его увидеть...", reply_markup=go_to_menu)
+
+
+# support psy
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('sup_psy'))
+async def sup_psy(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    await callback_query.message.answer_photo(open("support.png", "rb"),
+                                              caption="Опишите свой вопрос максимально подробно!\nОтправьте "
+                                                      "сообщение вида:\nsup_psy/<ваш вопрос>\nВ противном случае, "
+                                                      "наша команда не сможет его увидеть...", reply_markup=go_to_menu)
 
 
 # меню с кнопками про чек-ап
@@ -235,20 +405,16 @@ async def need_help(callback_query: types.CallbackQuery):
 
     await callback_query.message.answer_photo(open("psy.png", "rb"),
                                               caption='Наша миссия - сделать тебя с'
-                                                      'частливее ❤️\nУ нас ты можешь посетить бесплатную '
+                                                      'частливее ❤️\n\nУ нас ты можешь посетить бесплатную '
                                                       'диагностическую встречу с психологом, чтобы познакомиться, '
                                                       'сформировать запрос, '
                                                       'наметить план дольшейший действий!\nЭто поможет тебе выбрать '
                                                       'того психолога, который '
-                                                      'будет тебе по душе 😊\nКонсультация с психологом 60 минут - '
-                                                      '1199 рублей\nКонсультация с '
-                                                      'психологом 90 минут (по подписке) - 1499 рублей\nМы делаем '
+                                                      'будет тебе по душе 😊\n\nКонсультация с психологом 60 минут - '
+                                                      '1199 рублей\nМы делаем '
                                                       'все возможное, чтобы занятия '
                                                       'с психологами стали максимально доступными для тебя!\n\n'
-                                                      'Выбери ту сферу, в которой у тебя возникают трудности, '
-                                                      'чтобы увидеть тех психологов, '
-                                                      'которые лучше всего помогут тебе в этой сфере ❤️\nТакже, '
-                                                      'чтобы увидеть всех психологов, нажми на кнопку '
+                                                      'Чтобы увидеть всех психологов, нажми на кнопку '
                                                       '"Хочу посмотреть всех психологов"',
                                               reply_markup=all_user_problems)
 
@@ -467,16 +633,294 @@ async def psycho(callback_query: types.CallbackQuery):
         with con:
             time_list = list(con.execute(f"SELECT time, id FROM Slot WHERE psycho_id='{psy_id}' "
                                          f"and date='{date_of_slots}' and is_free='1';"))
+        print(time_list)
+        date_of_slots = date_of_slots.split('-')
+        date_of_slots = [int(x) for x in date_of_slots]
         for time in time_list:
             slot_time = datetime.time.fromisoformat(time[0])
-            now_time = datetime.time.fromisoformat(str(datetime.datetime.now().time().hour) + ':' +
-                                                   str(datetime.datetime.now().time().minute))
-            if now_time < slot_time:
+            now_time = datetime.time.fromisoformat(str(datetime.datetime.now().time())) #  + ':' +
+                                                   # str(datetime.datetime.now().time().minute))
+            if (now_time < slot_time and
+                datetime.datetime.now() == datetime.datetime(date_of_slots[0], date_of_slots[1], date_of_slots[2])) or \
+                    (datetime.datetime.now() < datetime.datetime(date_of_slots[0], date_of_slots[1], date_of_slots[2])):
+                print(1)
                 but.add(InlineKeyboardButton('⏰ ' + time[0], callback_data='reserve_slot_' + str(time[1])))
         but.add(InlineKeyboardButton('⬅️ Назад к психологам', callback_data='all_psy' + data[3]))
 
         await bot.send_message(callback_query.from_user.id, 'Пожалуйста, выберите наиболее подходящее для вас время ❤️',
                                reply_markup=but)
+
+
+# choose type of slot
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('reserve_slot_'))
+async def reserve_slot(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+
+    slot_id = callback_query.data.split('_')[2]
+    choose_type_of_consult = InlineKeyboardMarkup()
+
+    with con:
+        list_con = list(con.execute(f"SELECT tran_id, slot_id FROM Consultation WHERE is_done='0'"))
+
+    print(list_con)
+    is_free_slot = 0
+
+    for i in list_con:
+        if i[1] is None:
+            with con:
+                lst = list(con.execute(f"SELECT user_id, id FROM Transactions WHERE id={i[0]}"))
+            if str(lst[0][0]) == str(callback_query.from_user.id):
+                with con:
+                    con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
+                with con:
+                    id_con = list(con.execute(f"SELECT id FROM Consultation WHERE tran_id={i[0]} and slot_id is null"))[0][0]
+                with con:
+                    con.execute(f"UPDATE Consultation SET slot_id={slot_id} WHERE tran_id={i[0]} and id={id_con}")
+                is_free_slot = 1
+                await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
+                                                                    'В личном кабинете вы можете посмотреть всю '
+                                                                    'информацию о своих консультациях!',
+                                       reply_markup=go_to_menu)
+                with con:
+                    psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
+
+                await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
+                                       " к вам на консультацию!\nБолее подробную информацию можно посмотреть в личном "
+                                       "кабинете психолога)")
+        if is_free_slot == 1:
+            break
+
+    if not is_free_slot:
+
+        with con:
+            condition = list(con.execute(f"SELECT is_free FROM Slot WHERE id='{slot_id}'"))[0][0]
+
+        if int(condition) == 1:
+            with con:
+                con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
+
+            choose_type_of_consult.add(
+                InlineKeyboardButton('🧩 Диагностическая встреча', callback_data='create_tran_0_' + slot_id))
+            choose_type_of_consult.add(
+                InlineKeyboardButton('❤️ Хочу купить 1 консультацию', callback_data='create_tran_1_' + slot_id))
+            choose_type_of_consult.add(
+                InlineKeyboardButton('💖 Хочу купить 5 консультаций', callback_data='create_tran_5_' + slot_id))
+            choose_type_of_consult.add(
+                InlineKeyboardButton('💝 Хочу купить 10 консультаций', callback_data='create_tran_10_' + slot_id))
+            choose_type_of_consult.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
+
+            await bot.send_message(callback_query.from_user.id, 'Пожалуйста, выберите тип услуги, которую хотите получить ❤️\n '
+                                                                'При покупке 5 или 10 консультаций, вы записываетесь на это '
+                                                                'время, а время для остальных консультаций можете выбрать '
+                                                                'позже 😊\nЧтобы это сделать, просто снова выберите '
+                                                                'психолога, дату и время консультации!',
+                                   reply_markup=choose_type_of_consult)
+        else:
+            choose_type_of_consult.add(InlineKeyboardButton('⬅️ Назад к психологам', callback_data='all_psy' + '0'))
+            await bot.send_message(callback_query.from_user.id, 'К сожалению, этот слот только заняли(\nПожалуйста, '
+                                                                'выберите другой', reply_markup=choose_type_of_consult)
+
+
+# create tran (or diagnostic consult)
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('create_tran_'))
+async def create_tran(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    data = callback_query.data.split('_')
+    slot_id = data[3]
+    type_of_service = data[2]
+    create_con_btn = InlineKeyboardMarkup()
+
+    if int(type_of_service) == 0:
+        # TODO: добавить проверку, что количество диагностик не превышает 3
+        # TODO: при добавлении оплат в таблицу с транзакциями добавить поле is_paid и cost
+        #  (соответственно добавление полей в таблицы и поиск изменится!!!!!!)
+        print(callback_query.from_user.id)
+
+        sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
+        data1.append((callback_query.from_user.id, str(datetime.datetime.now().date()),
+                      str(datetime.datetime.now().time()), True))
+
+        with con:
+            con.executemany(sql1, data1)
+
+        with con:
+            print(list(con.execute(f"SELECT id FROM Transactions WHERE "
+                                       f"user_id={callback_query.from_user.id} and is_diagnostic={1}")))
+            tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
+                                       f"user_id={callback_query.from_user.id} and is_diagnostic={1}"))[0][0]
+
+        sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
+        data1.append((tran_id, slot_id))
+
+        with con:
+            con.executemany(sql1, data1)
+
+        await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на диагностическую '
+                                                            'встречу ❤️\nВ личном кабинете вы можете посмотреть всю '
+                                                            'информацию о своих консультациях!',
+                               reply_markup=go_to_menu)
+    else:
+        sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
+        data1.append((callback_query.from_user.id, str(datetime.datetime.now().date()),
+                      str(datetime.datetime.now().time()), False))
+
+        with con:
+            con.executemany(sql1, data1)
+
+        with con:
+            tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
+                                       f"user_id={callback_query.from_user.id} and is_diagnostic={0}"))[0][0]
+
+        create_con_btn.add(InlineKeyboardButton('➡ Дальше', callback_data='create_con_' + str(type_of_service) + '_' +
+                                                                          str(tran_id) + '_' + str(slot_id)))
+
+        await bot.send_message(callback_query.from_user.id, 'Оплачено!', reply_markup=create_con_btn)
+
+
+# create con
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('create_con_'))
+async def create_con(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    data = callback_query.data.split('_')
+    count = int(data[2])
+    tran_id = data[3]
+    slot_id = data[4]
+
+    for i in range(count):
+        if i == 0:
+            sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
+            data1.append((tran_id, slot_id))
+        else:
+            sql1, data1 = 'INSERT INTO Consultation (tran_id) values(?)', []
+            data1.append(tran_id)
+
+        with con:
+            con.executemany(sql1, data1)
+
+    with con:
+        psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
+
+    await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
+                           " к вам на консультацию!\nБолее подробную информацию можно посмотреть в личном "
+                           "кабинете психолога)")
+
+    await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
+                                                        'В личном кабинете вы можете посмотреть всю '
+                                                        'информацию о своих консультациях!',
+                           reply_markup=go_to_menu)
+
+
+# all consults (psy page)
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('my_consults'))
+async def psy_consults(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    await bot.send_message(callback_query.from_user.id, 'Ваши текущие консультации, на которые кто-то записался:',
+                           reply_markup=None)
+
+    with con:
+        lst_of_cons = list(con.execute(f"SELECT id, slot_id, tran_id FROM Consultation WHERE is_done={0}"))
+
+    with con:
+        for i in lst_of_cons:
+            if i[1] is not None:
+                lst = list(con.execute(f"SELECT psycho_id, date, time FROM Slot WHERE id={i[1]}"))
+                if lst[0][0] == callback_query.from_user.id:
+                    btn = InlineKeyboardMarkup()
+                    user_id = list(con.execute(f"SELECT user_id, is_diagnostic FROM Transactions WHERE id={i[2]}"))[0]
+                    btn.add(InlineKeyboardButton('💌 Отправить сообщение пользователю', callback_data='send_mess_' +
+                                                                                                      str(user_id[0])))
+                    btn.add(InlineKeyboardButton('✅ Отметить консультацию, как проведенную',
+                                                 callback_data='done_con_' + str(i[0])))
+                    st = "Диагностическая" if int(user_id[1]) == 1 else "Консультация"
+                    await bot.send_message(callback_query.from_user.id, str(user_id[0]) + '\n' + str(lst[0][1]) + ' ' +
+                                           str(lst[0][2]) + "\n" + st, reply_markup=btn)
+
+    await bot.send_message(callback_query.from_user.id, 'end', reply_markup=go_to_menu)
+
+
+# mark consultation as done
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('done_con'))
+async def done_con(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    con_id = callback_query.data.split('_')[-1]
+    print(con_id)
+
+    with con:
+        con.execute(f"UPDATE Consultation SET is_done={1} WHERE id={con_id}")
+
+    await bot.send_message(callback_query.from_user.id, 'done', reply_markup=go_to_menu)
+
+
+# send message to user
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('send_mess_'))
+async def send_mes(callback_query: types.CallbackQuery):
+
+    user_id = callback_query.data.split('_')[-1]
+
+    await bot.send_message(callback_query.from_user.id, "Чтобы отправить сообщение пользователю " + user_id +
+                           " вам нужно:\nНаписать: send/" + user_id + "/текст сообщения\nЕсли кнопка нажата по ошибке, "
+                                                                      "то просто перейдите в главное меню",
+                           reply_markup=go_to_menu)
+    await bot.send_message(callback_query.from_user.id,
+                           "Для удобства, скопируйте следующее сообщение, вставьте и дополните его:", reply_markup=None)
+    await bot.send_message(callback_query.from_user.id, "send/" + user_id + "/", reply_markup=None)
+
+
+# user account page
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('user_account'))
+async def user_account(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    global con
+
+    future_consultation = []
+    count_consult_without_slot = 0
+
+    with con:
+        list_con = list(con.execute(f"SELECT tran_id, slot_id FROM Consultation WHERE is_done='0'"))
+
+    print(list_con)
+
+    for i in list_con:
+        if i[1] is None:
+            with con:
+                lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={i[0]}"))
+            if str(lst[0][0]) == str(callback_query.from_user.id):
+                count_consult_without_slot += 1
+        else:
+            with con:
+                lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={i[0]}"))
+            if str(lst[0][0]) == str(callback_query.from_user.id):
+                with con:
+                    future_consultation.append(list(con.execute(f"SELECT date, time, psycho_id FROM Slot WHERE id={i[1]}")))
+
+    message = "Привет 😊\nКоличество оплаченных консультаций, на которые ты еще не запасался(ась): " + \
+              str(count_consult_without_slot) + "\nКонсультации, которые ты оплатил(а) и записался(ась):"
+    await callback_query.message.answer_photo(open('user.png', "rb"), caption=message, reply_markup=go_to_menu)
+
+    for x in future_consultation:
+        with con:
+            psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0][2]}"))[0][0]
+        mess = "Психолог: " + str(psy_name) + "\nДата и время консультации: " + str(x[0][0]) + "  " + str(x[0][1])
+        btn = InlineKeyboardMarkup()
+        btn.add(InlineKeyboardButton('💌 Отправить сообщение психологу', callback_data='send_mess_' +
+                                                                                          str(x[0][2])))
+        await bot.send_message(callback_query.from_user.id, mess, reply_markup=btn)
 
 
 # обработка фото-сообщений для админов, психологов, пользователей
@@ -510,7 +954,7 @@ async def user_problems(message: types.Message):
     with con:
         psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
 
-    if message.text[:3] == 'add' and str(message.from_user.id) == '596752948':
+    if message.text[:3] == 'add' and (str(message.from_user.id) == '596752948' or str(message.from_user.id) == '840638420'):
         mass = message.text.split('/')
         sql1, data1 = 'INSERT INTO Psychologist (id, name, problems, about, photo, rating) values(?, ?, ?, ?, ?, ?)', []
         data1.append((mass[1], mass[2], mass[3], mass[4], 'нет фото', 0))
@@ -519,12 +963,19 @@ async def user_problems(message: types.Message):
             con.executemany(sql1, data1)
 
         await bot.send_message(message.from_user.id, '10x', reply_markup=go_to_menu)
+    elif message.text[:3] == 'del' and (str(message.from_user.id) == '596752948' or str(message.from_user.id) == '840638420'):
+
+        with con:
+            con.execute(f"DELETE from Psychologist WHERE id='{message.text[4:]}'")
+
+        await bot.send_message(message.from_user.id, 'Психолог удален')
+
     elif message.text[:4] == 'slot' and str(message.from_user.id) in psycho_list:
         mass = message.text.split('/')
         sql1 = 'INSERT INTO Slot (id, psycho_id, date, time, is_free) values(?, ?, ?, ?, ?)'
 
         with con:
-            count = int(list(con.execute(f"SELECT COUNT(*) FROM Slot"))[0][0])
+            count = int(list(con.execute(f"SELECT MAX(id) FROM Slot"))[0][0])
 
         for x in range(1, len(mass)):
             dt = mass[x].split()
@@ -534,7 +985,7 @@ async def user_problems(message: types.Message):
                 con.executemany(sql1, data1)
 
         await bot.send_message(message.from_user.id, 'Ваши слоты установлены', reply_markup=go_to_menu)
-    elif message.text[:3] == 'all' and str(message.from_user.id) == '596752948':
+    elif message.text[:3] == 'all' and (str(message.from_user.id) == '596752948' or str(message.from_user.id) == '840638420'):
         mass = message.text.split('/')
 
         with con:
@@ -542,9 +993,33 @@ async def user_problems(message: types.Message):
 
         for user in user_list:
             await bot.send_message(user[0], mass[1])
+    elif message.text[:4] == 'send':
+        mess = message.text.split('/')
+
+        answer_kb = InlineKeyboardMarkup()
+        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
+
+        await bot.send_message(mess[1], "Новое сообщение:\n" + mess[2], reply_markup=answer_kb)
+        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!', reply_markup=go_to_menu)
+    elif message.text[:7] == 'sup_bot':
+        mess = message.text.split("/")[1]
+        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!\nСкоро наша команда вам ответит ❤',
+                               reply_markup=go_to_menu)
+        answer_kb = InlineKeyboardMarkup()
+        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
+        await bot.send_message('596752948', "Вопрос в поддержку от: " + str(message.from_user.id) + "\n" + mess,
+                               reply_markup=answer_kb)
+    elif message.text[:7] == 'sup_psy':
+        mess = message.text.split("/")[1]
+        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!\nСкоро наша команда вам ответит ❤',
+                               reply_markup=go_to_menu)
+        answer_kb = InlineKeyboardMarkup()
+        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
+        await bot.send_message('840638420', "Вопрос в поддержку от: " + str(message.from_user.id) + "\n" + mess,
+                               reply_markup=answer_kb)
     else:
         await bot.send_message(message.from_user.id, 'Некорректный ввод данных. Попробуйте снова',
-                               reply_markup=start_button)
+                               reply_markup=go_to_menu)
 
 
 '''АДМИНСКАЯ ЧАСТЬ'''

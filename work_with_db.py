@@ -56,9 +56,9 @@ def check_up(id, points):
             con.executemany(sql1, data1)
 
 
-with con:
-    print(list(con.execute(f"SELECT id FROM Psychologist")))
-    # print(datetime.date(2022, 12, 30).isocalendar())
+# with con:
+# print(list(con.execute(f"SELECT id FROM Psychologist")))
+# print(datetime.date(2022, 12, 30).isocalendar())
 # print(datetime.datetime.today().isocalendar()[1])
 # sql1, data1 = 'INSERT INTO CheckUp (user_id, type_of_graph, date, score) values(?, ?, ?, ?)', []
 # data1.append((596752948, 'MOOD', '2022-12-19', 3))
@@ -68,12 +68,35 @@ with con:
 #     print(str(list(con.execute(f"SELECT time_for_check_up FROM PERSONS"))[0]))
 # # check_up('111', '4 2 2 0 3')
 # with con:
-    # con.execute("DELETE from CheckUp;")
+    # con.execute("DELETE from Person;")
+#     con.execute("DELETE from Slot;")
+#     con.execute("DELETE from Consultation;")
 #     con.execute(f"UPDATE Slot SET is_free='0' WHERE date='2023-01-15' and time='22:30';")
 #     print(list(con.execute(f"SELECT id FROM Psychologist;")))
 #     print(list(con.execute(f"SELECT COUNT(*) FROM Psychologist")))
 #     print(list(con.execute(f"SELECT problems FROM Person WHERE id={596752948}"))[0][0])
 # with con:
 #     range_date = 6 - datetime.datetime.today().weekday()
-    # print(list(con.execute(f"SELECT date FROM Slot Where psycho_id='{}';")))
+# print(list(con.execute(f"SELECT date FROM Slot Where psycho_id='{}';")))
 # print(datetime.time.fromisoformat('04:23') > datetime.time.fromisoformat('14:58'))
+# print(str(datetime.datetime.now().date()) + ' ' + str(datetime.datetime.now().time()))
+# print(list(con.execute(f"SELECT id FROM Transactions WHERE "
+#                                        f"user_id='{596752948}' and is_diagnostic='{True}'")))
+# sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
+# data1.append(('42323424', str(datetime.datetime.now().date()),
+#                       str(datetime.datetime.now().time()), True))
+#
+# with con:
+#     con.executemany(sql1, data1)
+# s = ['xx', 'yyy', 'aaaaa']
+# print(max(s, key=len))
+
+# maxa = 0
+# for a in range(0, 100):
+#     for x in range(0, 10000):
+#         for y in range(0, 10000):
+#             if (x > a) or (y > a) or (y - 2 * x + 12 != 0):
+#                 maxa = max(maxa, a)
+#             else:
+#                 break
+# print(maxa)

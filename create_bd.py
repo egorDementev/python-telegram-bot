@@ -14,11 +14,11 @@ with con:
     """)
 
     con.execute("""
-        CREATE TABLE IF NOT EXISTS Consultation(
+        CREATE TABLE Consultation(
             id INTEGER PRIMARY KEY UNIQUE NOT NULL, 
             tran_id INTEGER REFERENCES Transactions(id) NOT NULL, 
-            slot_id INTEGER REFERENCES Slot(id) NOT NULL, 
-            is_dane INTEGER NOT NULL DEFAULT(0)
+            slot_id INTEGER REFERENCES Slot(id), 
+            is_done INTEGER NOT NULL DEFAULT(0)
         );
     """)
 
