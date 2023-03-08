@@ -2,6 +2,10 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types.message import ContentType
+
+from messages import MESSAGES
+from config import BOT_TOKEN, PAYMENTS_PROVIDER_TOKEN, IMAGE_URL
 
 import os
 # import asyncio
@@ -10,11 +14,16 @@ import sqlite3 as sl
 import work_with_db
 import draw
 import datetime
+import logging
 
 con = sl.connect('db//connection.db')
 
 bot = Bot(token=os.getenv('TOKEN'))
 dp = Dispatcher(bot)
+
+PRICE_1 = types.LabeledPrice(label='Одна консультация', amount=119900)
+PRICE_5 = types.LabeledPrice(label='Пять консультаций', amount=500000)
+PRICE_10 = types.LabeledPrice(label='Одна консультация', amount=1000000)
 
 '''КЛИЕНТСКАЯ ЧАСТЬ'''
 num = 0
@@ -680,7 +689,7 @@ async def reserve_slot(callback_query: types.CallbackQuery):
                 with con:
                     con.execute(f"UPDATE Consultation SET slot_id={slot_id} WHERE tran_id={i[0]} and id={id_con}")
                 is_free_slot = 1
-                await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
+                await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию........! ❤️\n'
                                                                     'В личном кабинете вы можете посмотреть всю '
                                                                     'информацию о своих консультациях!',
                                        reply_markup=go_to_menu)
@@ -699,8 +708,8 @@ async def reserve_slot(callback_query: types.CallbackQuery):
             condition = list(con.execute(f"SELECT is_free FROM Slot WHERE id='{slot_id}'"))[0][0]
 
         if int(condition) == 1:
-            with con:
-                con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
+            # with con:
+            #     con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
 
             choose_type_of_consult.add(
                 InlineKeyboardButton('🧩 Диагностическая встреча', callback_data='create_tran_0_' + slot_id))
@@ -742,6 +751,9 @@ async def create_tran(callback_query: types.CallbackQuery):
         #  (соответственно добавление полей в таблицы и поиск изменится!!!!!!)
         print(callback_query.from_user.id)
 
+        with con:
+            con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
+
         sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
         data1.append((callback_query.from_user.id, str(datetime.datetime.now().date()),
                       str(datetime.datetime.now().time()), True))
@@ -761,62 +773,158 @@ async def create_tran(callback_query: types.CallbackQuery):
         with con:
             con.executemany(sql1, data1)
 
+        with con:
+            psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
+
+        await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
+                               " к вам на диагностическую встречу!\nБолее подробную информацию можно посмотреть в личном "
+                               "кабинете психолога)")
+
         await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на диагностическую '
                                                             'встречу ❤️\nВ личном кабинете вы можете посмотреть всю '
                                                             'информацию о своих консультациях!',
                                reply_markup=go_to_menu)
     else:
-        sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
-        data1.append((callback_query.from_user.id, str(datetime.datetime.now().date()),
-                      str(datetime.datetime.now().time()), False))
+        if PAYMENTS_PROVIDER_TOKEN.split(':')[1] == 'TEST':
+            await bot.send_message(callback_query.from_user.id, MESSAGES['pre_buy_demo_alert'])
+        price = 0
+        if int(type_of_service) == 1:
+            price = PRICE_1
+        elif int(type_of_service) == 5:
+            price = PRICE_5
+        elif int(type_of_service) == 10:
+            price = PRICE_10
+        await bot.send_invoice(callback_query.from_user.id,
+                               title=MESSAGES['tm_title'],
+                               description=MESSAGES['tm_description'],
+                               provider_token=PAYMENTS_PROVIDER_TOKEN,
+                               currency='rub',
+                               is_flexible=False,  # True если конечная цена зависит от способа доставки
+                               prices=[price],
+                               start_parameter='time-machine-example',
+                               payload=str(slot_id) + '_' + str(type_of_service),
+                               )
+        await bot.send_message(callback_query.from_user.id,
+                               'Если вы нажали кнопку по ошибке, или передумали платить, '
+                               'то просто перейдите в главное меню и НИКОГДА НЕ ПЛАТИТЕ ПО ДАННОЙ КНОПКЕ '
+                               '(когда решитесь на покупку, то выберите новый слот и у вас появится новая '
+                               'форма оплаты)!!', reply_markup=go_to_menu)
 
-        with con:
-            con.executemany(sql1, data1)
 
-        with con:
-            tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
-                                       f"user_id={callback_query.from_user.id} and is_diagnostic={0}"))[0][0]
-
-        create_con_btn.add(InlineKeyboardButton('➡ Дальше', callback_data='create_con_' + str(type_of_service) + '_' +
-                                                                          str(tran_id) + '_' + str(slot_id)))
-
-        await bot.send_message(callback_query.from_user.id, 'Оплачено!', reply_markup=create_con_btn)
+@dp.pre_checkout_query_handler(lambda query: True)
+async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
 
-# create con
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('create_con_'))
-async def create_con(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+@dp.message_handler(content_types=ContentType.SUCCESSFUL_PAYMENT)
+async def process_successful_payment(message: types.Message):
+    print('successful_payment:')
+    pmnt = message.successful_payment.to_python()
+    data = pmnt['invoice_payload'].split('_')
+    count = data[1]
+    slot_id = data[0]
 
-    global con
+    print(data)
 
-    data = callback_query.data.split('_')
-    count = int(data[2])
-    tran_id = data[3]
-    slot_id = data[4]
+    with con:
+        con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
 
-    for i in range(count):
+    sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
+    data1.append((message.from_user.id, str(datetime.datetime.now().date()),
+                  str(datetime.datetime.now().time()), False))
+
+    with con:
+        con.executemany(sql1, data1)
+
+    with con:
+        tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
+                                   f"user_id={message.from_user.id} and is_diagnostic={0}"))[0][0]
+
+
+    with con:
+        list_con = list(con.execute(f"SELECT tran_id, slot_id FROM Consultation WHERE is_done='0'"))
+
+    print(list_con)
+    is_free_slot = 0
+
+    for i in list_con:
+        if i[1] is None:
+            with con:
+                lst = list(con.execute(f"SELECT user_id, id FROM Transactions WHERE id={i[0]}"))
+            if str(lst[0][0]) == str(message.from_user.id):
+                with con:
+                    con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
+                with con:
+                    id_con = list(con.execute(f"SELECT id FROM Consultation WHERE tran_id={i[0]} and slot_id is null"))[0][0]
+                with con:
+                    con.execute(f"UPDATE Consultation SET slot_id={slot_id} WHERE tran_id={i[0]} and id={id_con}")
+                is_free_slot = 1
+        if is_free_slot == 1:
+            break
+
+    for i in range(int(count)):
         if i == 0:
             sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
             data1.append((tran_id, slot_id))
         else:
-            sql1, data1 = 'INSERT INTO Consultation (tran_id) values(?)', []
-            data1.append(tran_id)
+            sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
+            data1.append((tran_id, None))
 
         with con:
             con.executemany(sql1, data1)
-
+    print(1)
     with con:
         psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
 
-    await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
+    await bot.send_message(psy_id, "Пользователь " + str(message.from_user.id) +
                            " к вам на консультацию!\nБолее подробную информацию можно посмотреть в личном "
                            "кабинете психолога)")
 
-    await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
+    await bot.send_message(message.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
                                                         'В личном кабинете вы можете посмотреть всю '
                                                         'информацию о своих консультациях!',
                            reply_markup=go_to_menu)
+
+    # create_con_btn.add(InlineKeyboardButton('➡ Дальше', callback_data='create_con_' + str(type_of_service) + '_' +
+    #                                                                   str(tran_id) + '_' + str(slot_id)))
+
+    # await bot.send_message(message.from_user.id, 'Оплачено!', reply_markup=create_con_btn)
+
+
+# create con
+# @dp.callback_query_handler(lambda c: c.data and c.data.startswith('create_con_'))
+# async def create_con(callback_query: types.CallbackQuery):
+#     await callback_query.message.delete()
+#
+#     global con
+#
+#     data = callback_query.data.split('_')
+#     count = int(data[2])
+#     tran_id = data[3]
+#     slot_id = data[4]
+#
+#     for i in range(count):
+#         if i == 0:
+#             sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
+#             data1.append((tran_id, slot_id))
+#         else:
+#             sql1, data1 = 'INSERT INTO Consultation (tran_id) values(?)', []
+#             data1.append(tran_id)
+#
+#         with con:
+#             con.executemany(sql1, data1)
+#
+#     with con:
+#         psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
+#
+#     await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
+#                            " к вам на консультацию!\nБолее подробную информацию можно посмотреть в личном "
+#                            "кабинете психолога)")
+#
+#     await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
+#                                                         'В личном кабинете вы можете посмотреть всю '
+#                                                         'информацию о своих консультациях!',
+#                            reply_markup=go_to_menu)
 
 
 # all consults (psy page)
