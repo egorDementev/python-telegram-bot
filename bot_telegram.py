@@ -626,7 +626,7 @@ async def psycho(callback_query: types.CallbackQuery):
             data_list = list(con.execute(f"SELECT date, id FROM Slot Where psycho_id='{psy_id}' and is_free='1';"))
 
         for date in data_list:
-            if today + margin_b <= datetime.date(int(date[0][:4]), int(date[0][5:7]), int(date[0][8:])) <= today + margin_a:
+            if today <= datetime.date(int(date[0][:4]), int(date[0][5:7]), int(date[0][8:])):
                 if date[0][8:] + '.' + date[0][5:7] not in list_of_date:
                     but.add(InlineKeyboardButton('📅 ' + date[0][8:] + '.' + date[0][5:7],
                                                  callback_data='psy_' + psy_id + '_' + str(date[0]) + '_' + data[2]))
@@ -1061,6 +1061,7 @@ async def user_problems(message: types.Message):
 
     with con:
         psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+        print(psycho_list)
 
     if message.text[:3] == 'add' and (str(message.from_user.id) == '596752948' or str(message.from_user.id) == '840638420'):
         mass = message.text.split('/')
