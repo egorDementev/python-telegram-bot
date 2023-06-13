@@ -1,9 +1,10 @@
 from PIL import Image, ImageDraw, ImageColor, ImageFont
+from data_provider import get_data_base_object
 import sqlite3 as sl
 import datetime
 import os
 
-con = sl.connect('db//connection.db')
+con = get_data_base_object()
 
 
 def create_empty(id, width, height, message, name):
@@ -19,8 +20,8 @@ def create_empty(id, width, height, message, name):
     for j in range(len(list_cor_x)):
         draw.line((list_cor_x[j], list_cor_y[0], list_cor_x[j], list_cor_y[-1]), fill=ImageColor.getrgb("#F0F0F0"), width=2)
 
-    font1 = ImageFont.truetype("data//Montserrat_r.ttf", 40)
-    font2 = ImageFont.truetype("data//Montserrat.ttf", 15)
+    font1 = ImageFont.truetype("resources/fonts//Montserrat_r.ttf", 40)
+    font2 = ImageFont.truetype("resources/fonts//Montserrat.ttf", 15)
     draw.text((width*2//10 - 50, height*2//10 - 40), message, (50, 50, 50), font=font1)
 
     text_w = font2.getlength(days[0])
@@ -28,8 +29,9 @@ def create_empty(id, width, height, message, name):
     for i in range(len(list_cor_x)):
         draw.text((list_cor_x[i] - text_w // 2 + 2, list_cor_y[-1] + height // 20), days[i], (100, 100, 100), font=font2)
 
-    im1, im2, im3, im4, im5 = Image.open("data//1.png"), Image.open("data//2.png"), Image.open("data//3.png"), \
-                              Image.open("data//4.png"), Image.open("data//5.png")
+    im1, im2, im3, im4, im5 = Image.open("resources/pictures/1.png"), Image.open("resources/pictures/2.png"), Image.open(
+        "resources/pictures/3.png"), \
+                              Image.open("resources/pictures/4.png"), Image.open("resources/pictures/5.png")
     im1.thumbnail(size=(30, 30))
     im2.thumbnail(size=(30, 30))
     im3.thumbnail(size=(30, 30))
@@ -40,10 +42,10 @@ def create_empty(id, width, height, message, name):
     for i in range(5):
         image.paste(list_im[i], (list_cor_x[0] - 50, list_cor_y[i] - 15), mask=list_im[i])
 
-    image.save('files//' + str(id) + "_" + name + ".png", "PNG")
+    image.save('resources/files//' + str(id) + "_" + name + ".png", "PNG")
     image.close()
 
-    return 'files//' + str(id) + "_" + name + ".png"
+    return 'resources/files//' + str(id) + "_" + name + ".png"
 
 
 def draw_point(path, width, height, day, mark):
@@ -111,12 +113,12 @@ def create_graphs(id):
 
 
 def photo_del(id):
-    os.remove("files//" + str(id) + "_mood.png")
-    os.remove("files//" + str(id) + "_anxiety.png")
-    os.remove("files//" + str(id) + "_procrastination.png")
-    os.remove("files//" + str(id) + "_loneliness.png")
-    os.remove("files//" + str(id) + "_condemning.png")
-    os.remove("files//" + str(id) + "_doubt.png")
+    os.remove("resources//files//" + str(id) + "_mood.png")
+    os.remove("resources//files//" + str(id) + "_anxiety.png")
+    os.remove("resources//files//" + str(id) + "_procrastination.png")
+    os.remove("resources//files//" + str(id) + "_loneliness.png")
+    os.remove("resources//files//" + str(id) + "_condemning.png")
+    os.remove("resources//files//" + str(id) + "_doubt.png")
 
 
 # create_empty(1, 1000, 600, 'График настроения', 'affs')
