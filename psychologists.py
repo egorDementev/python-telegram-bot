@@ -79,8 +79,6 @@ async def psy_consults(callback_query: types.CallbackQuery):
                 if lst[0][0] == callback_query.from_user.id:
                     btn = InlineKeyboardMarkup()
                     user_id = list(con.execute(f"SELECT user_id, is_diagnostic FROM Transactions WHERE id={i[2]}"))[0]
-                    btn.add(InlineKeyboardButton('💌 Отправить сообщение пользователю',
-                                                 callback_data='send_mess_' + str(user_id[0])))
                     btn.add(InlineKeyboardButton('✅ Отметить консультацию, как проведенную',
                                                  callback_data='done_con_' + str(i[0])))
                     st = "Диагностическая" if int(user_id[1]) == 1 else "Консультация"

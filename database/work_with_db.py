@@ -82,13 +82,13 @@ def write_check_up(person_id, point, number):
 
 #     print(str(list(con.execute(f"SELECT time_for_check_up FROM PERSONS"))[0]))
 # # check_up('111', '4 2 2 0 3')
-with con:
-    con.execute("DELETE from Person;")
-    con.execute("DELETE from Slot;")
-    con.execute("DELETE from Consultation;")
-    con.execute("DELETE from CheckUp;")
-    con.execute("DELETE from Psychologist;")
-    con.execute("DELETE from Transactions;")
+# with con:
+#     con.execute("DELETE from Person;")
+#     con.execute("DELETE from Slot;")
+#     con.execute("DELETE from Consultation;")
+#     con.execute("DELETE from CheckUp;")
+#     con.execute("DELETE from Psychologist;")
+#     con.execute("DELETE from Transactions;")
 #     con.execute(f"UPDATE Slot SET is_free='0' WHERE date='2023-01-15' and time='22:30';")
 #     print(list(con.execute(f"SELECT id FROM Psychologist;")))
 #     print(list(con.execute(f"SELECT COUNT(*) FROM Psychologist")))

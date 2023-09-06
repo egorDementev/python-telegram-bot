@@ -11,7 +11,7 @@ dp = Dispatcher(bot)
 # самое первое сообщение при старте бота
 async def start(message: types.Message):
     await bot.send_message(message.from_user.id,
-                           'Привет, мы очень рады видеть тебя в нашем боте! Давай пройдем короткую регистрацию, '
+                           'ППППривет, мы очень рады видеть тебя в нашем боте! Давай пройдем короткую регистрацию, '
                            'после чего ты сможешь полноценно пользоваться услугами нашего бота ❤️',
                            reply_markup=get_continue_kb())
 
@@ -39,20 +39,6 @@ async def home_page(callback_query: types.CallbackQuery):
     await callback_query.message.answer_photo(open("resources/pictures/logo.png", "rb"),
                                               caption='Привет 👋\nВыбери одну из функций:',
                                               reply_markup=main_menu)
-
-
-# send message to user
-async def send_mes(callback_query: types.CallbackQuery):
-
-    user_id = callback_query.data.split('_')[-1]
-
-    await bot.send_message(callback_query.from_user.id, "Чтобы отправить сообщение пользователю " + user_id +
-                           " вам нужно:\nНаписать: send/" + user_id + "/текст сообщения\nЕсли кнопка нажата по ошибке, "
-                                                                      "то просто перейдите в главное меню",
-                           reply_markup=get_go_to_menu_kb())
-    await bot.send_message(callback_query.from_user.id,
-                           "Для удобства, скопируйте следующее сообщение, вставьте и дополните его:", reply_markup=None)
-    await bot.send_message(callback_query.from_user.id, "send/" + user_id + "/", reply_markup=None)
 
 
 # user account page
@@ -91,9 +77,7 @@ async def user_account(callback_query: types.CallbackQuery):
         with con:
             psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0][2]}"))[0][0]
         mess = "Психолог: " + str(psy_name) + "\nДата и время консультации: " + str(x[0][0]) + "  " + str(x[0][1])
-        btn = InlineKeyboardMarkup()
-        btn.add(InlineKeyboardButton('💌 Отправить сообщение психологу', callback_data='send_mess_' + str(x[0][2])))
-        await bot.send_message(callback_query.from_user.id, mess, reply_markup=btn)
+        await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
 
 
 # обработка текстовых сообщений
@@ -151,30 +135,6 @@ async def user_problems(message: types.Message):
 
         for user in user_list:
             await bot.send_message(user[0], mass[1])
-    elif message.text[:4] == 'send':
-        mess = message.text.split('/')
-
-        answer_kb = InlineKeyboardMarkup()
-        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
-
-        await bot.send_message(mess[1], "Новое сообщение:\n" + mess[2], reply_markup=answer_kb)
-        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!', reply_markup=get_go_to_menu_kb())
-    elif message.text[:7] == 'sup_bot':
-        mess = message.text.split("/")[1]
-        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!\nСкоро наша команда вам ответит ❤',
-                               reply_markup=get_go_to_menu_kb())
-        answer_kb = InlineKeyboardMarkup()
-        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
-        await bot.send_message('596752948', "Вопрос в поддержку от: " + str(message.from_user.id) + "\n" + mess,
-                               reply_markup=answer_kb)
-    elif message.text[:7] == 'sup_psy':
-        mess = message.text.split("/")[1]
-        await bot.send_message(message.from_user.id, 'Сообщение успешно отправлено!\nСкоро наша команда вам ответит ❤',
-                               reply_markup=get_go_to_menu_kb())
-        answer_kb = InlineKeyboardMarkup()
-        answer_kb.add(InlineKeyboardButton('Ответить', callback_data='send_mess_' + str(message.from_user.id)))
-        await bot.send_message('840638420', "Вопрос в поддержку от: " + str(message.from_user.id) + "\n" + mess,
-                               reply_markup=answer_kb)
     else:
         await bot.send_message(message.from_user.id, 'Некорректный ввод данных. Попробуйте снова',
                                reply_markup=get_go_to_menu_kb())
@@ -188,6 +148,5 @@ def init_start_application(telegram_bot, dispatcher):
     dp = dispatcher
     dp.message_handler(commands=['start', 'help'])(start)
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('menu'))(home_page)
-    dp.callback_query_handler(lambda c: c.data and c.data.startswith('send_mess_'))(send_mes)
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('user_account'))(user_account)
     dp.message_handler()(user_problems)

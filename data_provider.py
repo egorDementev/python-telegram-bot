@@ -65,8 +65,10 @@ def get_psycho_kb() -> InlineKeyboardMarkup:
 # возвращает клавиатуру для раздела технической поддержки бота
 def get_support_kb() -> InlineKeyboardMarkup:
     support_kb = InlineKeyboardMarkup(row_width=1)
-    support_kb.add(InlineKeyboardButton("👤 По вопросам работы психологов", callback_data='sup_psy'))
-    support_kb.add(InlineKeyboardButton("🤖 По вопросам работы бота", callback_data='sup_bot'))
+    support_kb.add(InlineKeyboardButton("👤 По вопросам работы психологов", callback_data='sup_psy',
+                                        url="https://t.me/ilya_undertakes"))
+    support_kb.add(InlineKeyboardButton("🤖 По вопросам работы бота", callback_data='sup_bot',
+                                        url="https://t.me/egor_dementev"))
     support_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
     return support_kb
 
