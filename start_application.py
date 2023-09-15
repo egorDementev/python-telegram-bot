@@ -13,7 +13,7 @@ async def start(message: types.Message):
     await bot.send_message(message.from_user.id,
                            'Привет, мы очень рады видеть тебя в нашем боте проекта Connection ❤️!\n'
                            'Для начала, давай познакомимся с возможностями этого бота!\n\n'
-                           '‼️ Бот запущен в тестовом режиме, при возникновении каки-либо проблем просим писать '
+                           '‼️ Бот запущен в тестовом режиме, при возникновении каких-либо проблем просим писать '
                            'в тех.поддержку!!',
                            reply_markup=get_continue_kb())
 
@@ -30,13 +30,13 @@ async def home_page(callback_query: types.CallbackQuery):
     if str(callback_query.from_user.id) in get_admin_list():
         main_menu.add(all_main_buttons[-1])
 
-    with con:
-        psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+    # with con:
+    #     psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
 
-    if str(callback_query.from_user.id) in psycho_list:
-        main_menu.add(all_main_buttons[-2])
+    # if str(callback_query.from_user.id) in psycho_list:
+    #     main_menu.add(all_main_buttons[-2])
 
-    for x in range(len(all_main_buttons) - 2):
+    for x in range(len(all_main_buttons) - 1):
         main_menu.add(all_main_buttons[x])
     await callback_query.message.answer_photo(open("resources/pictures/logo.png", "rb"),
                                               caption='Привет 👋\nБлагодарим за доверие к нашему сервису ❤️',
@@ -70,7 +70,7 @@ async def user_account(callback_query: types.CallbackQuery):
                     future_consultations.append([list(con.execute(f"SELECT psy_id FROM Transactions "
                                                                   f"WHERE id={int(i[0])};"))[0][0], i[1]])
 
-    message = "Привет 😊\nВ личном кабинете отображаются консультации, на которые ты записался(лась):"
+    message = "Привет 😊\nВ личном кабинете будут отображаться консультации, на которые ты записался(лась)!"
     await callback_query.message.answer_photo(open('resources/pictures/user.png', "rb"), caption=message,
                                               reply_markup=get_go_to_menu_kb())
 

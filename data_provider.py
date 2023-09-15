@@ -33,20 +33,21 @@ def get_go_to_menu_kb() -> InlineKeyboardMarkup:
 
 # возвращает лист клавиш, которые отвечают за разделы главного меню
 def get_main_buttons_kb() -> list:
-    return [InlineKeyboardButton('👤 Мой кабинет', callback_data='user_account'),
-            InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
-            InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
-            InlineKeyboardButton('⚙️ Техподдержка', callback_data='support'),
-            InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
-            InlineKeyboardButton('⚙️ Кабинет администратора', callback_data='admin')]
+    return [
+        InlineKeyboardButton('👤 Мой кабинет', callback_data='user_account'),
+        InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
+        # InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
+        InlineKeyboardButton('⚙️ Техподдержка', callback_data='support'),
+        # InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
+        InlineKeyboardButton('⚙️ Кабинет администратора', callback_data='admin')]
 
 
 # возвращает клавиатуру администратора
 def get_admin_kb() -> InlineKeyboardMarkup:
     admin_kb = InlineKeyboardMarkup(row_width=1)
-    admin_kb.add(InlineKeyboardButton('⚙️ Показать психологов', callback_data='show_psycho'))
-    admin_kb.add(InlineKeyboardButton('⚙️ Добавить психолога в команду', callback_data='add'))
-    admin_kb.add(InlineKeyboardButton('⚙️ Удалить психолога из команды', callback_data='del_psy'))
+    # admin_kb.add(InlineKeyboardButton('⚙️ Показать психологов', callback_data='show_psycho'))
+    # admin_kb.add(InlineKeyboardButton('⚙️ Добавить психолога в команду', callback_data='add'))
+    # admin_kb.add(InlineKeyboardButton('⚙️ Удалить психолога из команды', callback_data='del_psy'))
     admin_kb.add(InlineKeyboardButton('⚙️ Сделать рассылку', callback_data='send_to_all'))  # all
     admin_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
     return admin_kb
