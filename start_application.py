@@ -2,7 +2,7 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
     get_go_to_menu_kb, get_bot_token
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -43,41 +43,58 @@ async def home_page(callback_query: types.CallbackQuery):
 
 # user account page
 async def user_account(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    # await callback_query.message.delete()
 
     con = get_data_base_object()
 
-    future_consultation = []
-    count_consult_without_slot = 0
+    future_consultations = []
+    future_diagnostics = []
 
     with con:
-        list_con = list(con.execute(f"SELECT tran_id, slot_id FROM Consultation WHERE is_done='0'"))
+        list_con = list(con.execute(f"SELECT tran_id, number FROM Consultation WHERE is_done='0'"))
 
     print(list_con)
 
     for i in list_con:
-        if i[1] is None:
-            with con:
-                lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={i[0]}"))
-            if str(lst[0][0]) == str(callback_query.from_user.id):
-                count_consult_without_slot += 1
-        else:
-            with con:
-                lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={i[0]}"))
-            if str(lst[0][0]) == str(callback_query.from_user.id):
+        with con:
+            lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={int(i[0])}"))
+        if str(lst[0][0]) == str(callback_query.from_user.id):
+            if i[1] == 0:
                 with con:
-                    future_consultation.append(list(con.execute(f"SELECT date, time, psycho_id FROM "
-                                                                f"Slot WHERE id={i[1]}")))
+                    future_diagnostics.append(list(con.execute(f"SELECT psy_id, comment FROM "
+                                                               f"Transactions WHERE id={int(i[0])};"))[0])
+            else:
+                with con:
+                    future_consultations.append([list(con.execute(f"SELECT psy_id FROM Transactions "
+                                                                  f"WHERE id={int(i[0])};"))[0][0], i[1]])
 
-    message = "Привет 😊\nКонсультации, которые ты записался(ась):"
+    message = "Привет 😊\nВ личном кабинете отображаются консультации, на которые ты записался(лась):"
     await callback_query.message.answer_photo(open('resources/pictures/user.png', "rb"), caption=message,
                                               reply_markup=get_go_to_menu_kb())
 
-    for x in future_consultation:
-        with con:
-            psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0][2]}"))[0][0]
-        mess = "Психолог: " + str(psy_name) + "\nДата и время консультации: " + str(x[0][0]) + "  " + str(x[0][1])
-        await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+    if future_diagnostics:
+        for x in future_diagnostics:
+            print(x)
+            with con:
+                psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]};"))[0][0]
+            print(psy_name)
+            mess = "🧩 Диагностическая встреча\nПсихолог: " + psy_name + "\nДата встречи: " + \
+                   x[1][8:] + "." + x[1][5:7] + "." + x[1][:4] + "\nПсихолог с вами обязательно свяжется заранее, " \
+                                                                 "чтобы обсудить время проведения консультации 💖\n" \
+                                                                 "Если у вас есть какие-либо вопросы, или вам нужно " \
+                                                                 "связаться с психологом, то напишите, " \
+                                                                 "пожалуйста в тех. поддержку!"
+            await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+
+        for x in future_consultations:
+            print(x)
+            with con:
+                psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]}"))[0][0]
+            mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации с пакете: " + \
+                   str(x[1]) + "\nПсихолог обязательно с вами свяжется заранее, чтобы обсудить время проведения " \
+                               "консультации ❤️\nЕсли у вас есть какие-то вопросы, или вам нужно связаться с " \
+                               "психологом, то напишите в тех. поддержку!"
+            await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
 
 
 # обработка текстовых сообщений
@@ -91,8 +108,8 @@ async def user_problems(message: types.Message):
     if message.text[:3] == 'add' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
                                       == '840638420'):
         mass = message.text.split('/')
-        sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo, rating) values(?, ?, ?, ?, ?)', []
-        data1.append((mass[1], mass[2], mass[3], 'нет фото', 0))
+        sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo) values(?, ?, ?, ?)', []
+        data1.append((mass[1], mass[2], mass[3], 'нет фото'))
 
         with con:
             con.executemany(sql1, data1)
@@ -106,26 +123,6 @@ async def user_problems(message: types.Message):
 
         await bot.send_message(message.from_user.id, 'Психолог удален')
 
-    elif message.text[:4] == 'slot' and str(message.from_user.id) in psycho_list:
-        mass = message.text.split('/')
-        sql1 = 'INSERT INTO Slot (id, psycho_id, date, time, is_free) values(?, ?, ?, ?, ?)'
-
-        with con:
-            lst = list(con.execute(f"SELECT * FROM Slot"))
-        with con:
-            if len(lst) > 0:
-                count = int(list(con.execute(f"SELECT MAX(id) FROM Slot"))[0][0])
-            else:
-                count = 0
-
-        for x in range(1, len(mass)):
-            dt = mass[x].split()
-            data1 = [(count + x, int(message.from_user.id), dt[0], dt[1], 1)]
-
-            with con:
-                con.executemany(sql1, data1)
-
-        await bot.send_message(message.from_user.id, 'Ваши слоты установлены', reply_markup=get_go_to_menu_kb())
     elif message.text[:3] == 'all' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
                                         == '840638420'):
         mass = message.text.split('/')

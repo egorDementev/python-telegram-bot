@@ -17,7 +17,7 @@ with con:
         CREATE TABLE Consultation(
             id INTEGER PRIMARY KEY UNIQUE NOT NULL, 
             tran_id INTEGER REFERENCES Transactions(id) NOT NULL, 
-            slot_id INTEGER REFERENCES Slot(id), 
+            number INTEGER NOT NULL, 
             is_done INTEGER NOT NULL DEFAULT(0)
         );
     """)
@@ -34,18 +34,7 @@ with con:
             id INTEGER PRIMARY KEY UNIQUE NOT NULL,
             name TEXT NOT NULL,
             about TEXT NOT NULL, 
-            photo TEXT NOT NULL, 
-            rating INTEGER NOT NULL DEFAULT(0)
-        );
-    """)
-
-    con.execute("""
-        CREATE TABLE IF NOT EXISTS Slot(
-            id INTEGER PRIMARY KEY UNIQUE NOT NULL, 
-            psycho_id INTEGER REFERENCES Psychologist(id) NOT NULL, 
-            date TEXT NOT NULL, 
-            time TEXT NOT NULL, 
-            is_free INTEGER DEFAULT(1) NOT NULL
+            photo TEXT NOT NULL
         );
     """)
 
@@ -54,6 +43,8 @@ with con:
             id INTEGER PRIMARY KEY UNIQUE NOT NULL, 
             user_id INTEGER REFERENCES Person(id) NOT NULL, 
             date TEXT NOT NULL, time TEXT NOT NULL, 
-            is_diagnostic NOT NULL DEFAULT (False)
+            psy_id INTEGER REFERENCES Psychologist(id) NOT NULL,
+            count_consults INTEGER NOT NULL,
+            comment TEXT NOT NULL
         );
     """)

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -9,153 +9,95 @@ bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
 
 
+async def insert_into_tran(user_id, psy_id, count_consults, comment):
+    con = get_data_base_object()
+
+    with con:
+        tran_id = len(list(con.execute(f"SELECT * FROM Transactions;"))) + 1
+
+    sql1, data = 'INSERT INTO Transactions (id, user_id, date, time, psy_id, count_consults, comment) ' \
+                 'values(?, ?, ?, ?, ?, ?, ?)', []
+
+    data.append((tran_id, user_id, str(datetime.today().date().isoformat()), str(datetime.today().time().isoformat()),
+                 psy_id, count_consults, comment))
+    print(data)
+
+    with con:
+        con.executemany(sql1, data)
+
+    await create_consult(tran_id, user_id)
+
+
 # create tran (or diagnostic consult)
 async def create_tran(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
 
+    data = callback_query.data.split('_')
+    psy_id = data[2]
+    count_consults = data[3]
+
+    if int(count_consults) == 0:
+        await insert_into_tran(int(callback_query.from_user.id), int(psy_id), int(count_consults), data[4])
+
+    else:
+        if payment():
+            await insert_into_tran(int(callback_query.from_user.id), int(psy_id), int(count_consults), "-")
+        else:
+            await bot.send_message(callback_query.from_user.id,
+                                   "Произошла неизвестная ошибка при оплате...\nПожалуйста, обратитесь в поддержку!!!",
+                                   reply_markup=get_go_to_menu_kb())
+
+
+async def create_consult(tran_id, user_id):
     con = get_data_base_object()
 
-    data = callback_query.data.split('_')
-    slot_id = data[3]
-    type_of_service = data[2]
+    with con:
+        number = int(list(con.execute(f"SELECT count_consults FROM Transactions WHERE id={tran_id};"))[0][0])
+        con_id = len(list(con.execute(f"SELECT * FROM Consultation;")))
+        comment = str(list(con.execute(f"SELECT comment FROM Transactions WHERE id={tran_id};"))[0][0])
+        psy_id = int(list(con.execute(f"SELECT psy_id FROM Transactions WHERE id={tran_id};"))[0][0])
 
-    if int(type_of_service) == 0:
-        print(callback_query.from_user.id)
+    sql1 = 'INSERT INTO Consultation (id, tran_id, number, is_done) ' \
+           'values(?, ?, ?, ?)'
 
-        with con:
-            con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
-
-        sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
-        data1.append((callback_query.from_user.id, str(datetime.datetime.now().date()),
-                      str(datetime.datetime.now().time()), True))
-
-        with con:
-            con.executemany(sql1, data1)
+    if number == 0:
+        data = []
+        data.append((con_id, tran_id, number, 0))
 
         with con:
-            print(list(con.execute(f"SELECT id FROM Transactions WHERE "
-                                   f"user_id={callback_query.from_user.id} and is_diagnostic={1}")))
-            tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
-                                       f"user_id={callback_query.from_user.id} and is_diagnostic={1}"))[0][0]
+            con.executemany(sql1, data)
 
-        sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
-        data1.append((tran_id, slot_id))
-
-        with con:
-            con.executemany(sql1, data1)
-
-        with con:
-            psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
-
-        await bot.send_message(psy_id, "Пользователь " + str(callback_query.from_user.id) +
-                               " к вам на диагностическую встречу!\nБолее подробную информацию можно посмотреть "
-                               "в личном кабинете психолога)")
-
-        await bot.send_message(callback_query.from_user.id, 'Поздравляю, вы записаны на диагностическую '
-                                                            'встречу ❤️\nВ личном кабинете вы можете посмотреть всю '
-                                                            'информацию о своих консультациях!',
+        await bot.send_message(user_id, "Поздравляем, вы записались на диагностическую встречу!!!\nВскоре, "
+                                        "психолог свяжется с тобой для обсуждения времени консультации!\n"
+                                        "Информацию о ваших консультациях вы можете посмотреть в личном профиле.",
                                reply_markup=get_go_to_menu_kb())
-    # else:
-    #     if PAYMENTS_PROVIDER_TOKEN.split(':')[1] == 'TEST':
-    #         await bot.send_message(callback_query.from_user.id, MESSAGES['pre_buy_demo_alert'])
-    #     price = 0
-    #     if int(type_of_service) == 1:
-    #         price = PRICE_1
-    #     elif int(type_of_service) == 5:
-    #         price = PRICE_5
-    #     elif int(type_of_service) == 10:
-    #         price = PRICE_10
-    #     await bot.send_invoice(callback_query.from_user.id,
-    #                            title=MESSAGES['tm_title'],
-    #                            description=MESSAGES['tm_description'],
-    #                            provider_token=PAYMENTS_PROVIDER_TOKEN,
-    #                            currency='rub',
-    #                            is_flexible=False,  # True если конечная цена зависит от способа доставки
-    #                            prices=[price],
-    #                            start_parameter='time-machine-example',
-    #                            payload=str(slot_id) + '_' + str(type_of_service),
-    #                            )
-    #     await bot.send_message(callback_query.from_user.id,
-    #                            'Если вы нажали кнопку по ошибке, или передумали платить, '
-    #                            'то просто перейдите в главное меню и НИКОГДА НЕ ПЛАТИТЕ ПО ДАННОЙ КНОПКЕ '
-    #                            '(когда решитесь на покупку, то выберите новый слот и у вас появится новая '
-    #                            'форма оплаты)!!', reply_markup=get_go_to_menu_kb())
+
+        await bot.send_message(psy_id, f"Новый клиент записался к вам на диагностику на {comment}!\n"
+                                       f"Подробную информацию можно посмотреть в кабинете психолога!",
+                               reply_markup=get_go_to_menu_kb())
+
+    else:
+        for i in range(number):
+            data = []
+            data.append((con_id, tran_id, i + 1, 0))
+            con_id += 1
+
+            with con:
+                con.executemany(sql1, data)
+
+        await bot.send_message(user_id, f"Поздравляем, вы успешно приобрели пакет консультаций "
+                                        f"в количестве: {number} !!!\nВскоре, "
+                                        "психолог свяжется с тобой для обсуждения времени консультации!\n"
+                                        "Информацию о ваших консультациях вы можете посмотреть в личном профиле.",
+                               reply_markup=get_go_to_menu_kb())
+
+        await bot.send_message(psy_id, f"Клиент приобрел у вас пакет консультаций в количестве: {number} !!\n"
+                                       f"Подробную информацию можно посмотреть в кабинете психолога!",
+                               reply_markup=get_go_to_menu_kb())
 
 
-# async def process_pre_checkout_query(pre_checkout_query: types.PreCheckoutQuery):
-#     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-
-
-# async def process_successful_payment(message: types.Message):
-#     print('successful_payment:')
-#     payment = message.successful_payment.to_python()
-#     data = payment['invoice_payload'].split('_')
-#     count = data[1]
-#     slot_id = data[0]
-#
-#     print(data)
-#
-#     con = get_data_base_object()
-#
-#     with con:
-#         con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
-#
-#     sql1, data1 = 'INSERT INTO Transactions (user_id, date, time, is_diagnostic) values(?, ?, ?, ?)', []
-#     data1.append((message.from_user.id, str(datetime.datetime.now().date()),
-#                   str(datetime.datetime.now().time()), False))
-#
-#     with con:
-#         con.executemany(sql1, data1)
-#
-#     with con:
-#         tran_id = list(con.execute(f"SELECT id FROM Transactions WHERE "
-#                                    f"user_id={message.from_user.id} and is_diagnostic={0}"))[0][0]
-#
-#
-#     with con:
-#         list_con = list(con.execute(f"SELECT tran_id, slot_id FROM Consultation WHERE is_done='0'"))
-#
-#     print(list_con)
-#     is_free_slot = 0
-#
-#     for i in list_con:
-#         if i[1] is None:
-#             with con:
-#                 lst = list(con.execute(f"SELECT user_id, id FROM Transactions WHERE id={i[0]}"))
-#             if str(lst[0][0]) == str(message.from_user.id):
-#                 with con:
-#                     con.execute(f"UPDATE Slot SET is_free='0' WHERE id='{slot_id}'")
-#                 with con:
-#                     id_con = list(con.execute(f"SELECT id FROM Consultation WHERE tran_id={i[0]} and
-#                     slot_id is null"))[0][0]
-#                 with con:
-#                     con.execute(f"UPDATE Consultation SET slot_id={slot_id} WHERE tran_id={i[0]} and id={id_con}")
-#                 is_free_slot = 1
-#         if is_free_slot == 1:
-#             break
-#
-#     for i in range(int(count)):
-#         if i == 0:
-#             sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
-#             data1.append((tran_id, slot_id))
-#         else:
-#             sql1, data1 = 'INSERT INTO Consultation (tran_id, slot_id) values(?, ?)', []
-#             data1.append((tran_id, None))
-#
-#         with con:
-#             con.executemany(sql1, data1)
-#     print(1)
-#     with con:
-#         psy_id = list(con.execute(f"SELECT psycho_id FROM Slot WHERE id={slot_id}"))[0][0]
-#
-#     await bot.send_message(psy_id, "Пользователь " + str(message.from_user.id) +
-#                            " к вам на консультацию!\nБолее подробную информацию можно посмотреть в личном "
-#                            "кабинете психолога)")
-#
-#     await bot.send_message(message.from_user.id, 'Поздравляю, вы записаны на консультацию! ❤️\n'
-#                                                         'В личном кабинете вы можете посмотреть всю '
-#                                                         'информацию о своих консультациях!',
-#                            reply_markup=go_to_menu)
+async def payment():
+    return True
 
 
 # инициализация функций создания транзакции и оплаты
