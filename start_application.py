@@ -11,8 +11,10 @@ dp = Dispatcher(bot)
 # самое первое сообщение при старте бота
 async def start(message: types.Message):
     await bot.send_message(message.from_user.id,
-                           'ППППривет, мы очень рады видеть тебя в нашем боте! Давай пройдем короткую регистрацию, '
-                           'после чего ты сможешь полноценно пользоваться услугами нашего бота ❤️',
+                           'Привет, мы очень рады видеть тебя в нашем боте проекта Connection ❤️!\n'
+                           'Для начала, давай познакомимся с возможностями этого бота!\n\n'
+                           '‼️ Бот запущен в тестовом режиме, при возникновении каки-либо проблем просим писать '
+                           'в тех.поддержку!!',
                            reply_markup=get_continue_kb())
 
 
@@ -37,13 +39,13 @@ async def home_page(callback_query: types.CallbackQuery):
     for x in range(len(all_main_buttons) - 2):
         main_menu.add(all_main_buttons[x])
     await callback_query.message.answer_photo(open("resources/pictures/logo.png", "rb"),
-                                              caption='Привет 👋\nВыбери одну из функций:',
+                                              caption='Привет 👋\nБлагодарим за доверие к нашему сервису ❤️',
                                               reply_markup=main_menu)
 
 
 # user account page
 async def user_account(callback_query: types.CallbackQuery):
-    # await callback_query.message.delete()
+    await callback_query.message.delete()
 
     con = get_data_base_object()
 

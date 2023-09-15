@@ -14,7 +14,8 @@ dp = Dispatcher(bot)
 async def my_feeling(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     await callback_query.message.answer_photo(open("resources/pictures/check_up.png", "rb"),
-                                              caption='Давай вспомним, как прошел твой день ❤️',
+                                              caption='Давай вспомним, как прошел твой день ❤️\n'
+                                                      'Тут ты можешь порефлексировать и оценить свое состояние!',
                                               reply_markup=get_check_up_kb())
 
 
