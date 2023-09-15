@@ -24,11 +24,12 @@ async def send_check_ups(cq):
     media = types.MediaGroup()
     media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_mood.png"),
                        caption='📈 На сегодняшний день графики вашего состояния выглядят так:')
-    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_anxiety.png"))
-    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_procrastination.png"))
-    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_loneliness.png"))
-    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_doubt.png"))
-    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_condemning.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_calmness.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_productivity.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_environment.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_self_confidence.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_pacification.png"))
+    media.attach_photo(types.InputFile('resources//files//' + str(cq.from_user.id) + "_self_satisfaction.png"))
     await bot.send_media_group(cq.from_user.id, media=media)
     await bot.send_message(cq.from_user.id,
                            'С заботой, твой connection ❤️', reply_markup=get_go_to_menu_kb())
@@ -41,7 +42,7 @@ async def process_check_up(callback_query: types.CallbackQuery):
     count = count_today_check_ups(callback_query.from_user.id)
     write_check_up(callback_query.from_user.id, code, count)
 
-    if count < 5:
+    if count < 6:
         await bot.send_message(callback_query.from_user.id, get_questions()[count], reply_markup=get_check_kb())
     else:
 
@@ -61,7 +62,8 @@ async def is_check_up_done(callback_query: types.CallbackQuery):
     code = callback_query.data[3:]
     if int(code) == 1:
         if if_check(callback_query.from_user.id):
-            await bot.send_message(callback_query.from_user.id, 'Какое у тебя настроение сегодня?',
+            await bot.send_message(callback_query.from_user.id, 'Какое у тебя настроение сегодня? '
+                                                                'Как ты себя чувствуешь?',
                                    reply_markup=get_check_kb())
         else:
             await bot.send_message(callback_query.from_user.id, 'Вы уже отследили свое состояние сегодня ❤️',

@@ -63,7 +63,8 @@ def write_check_up(person_id, point, number):
     global con
 
     now = datetime.datetime.today().date()
-    table_name = ['MOOD', 'ANXIETY', 'PROCRASTINATION', 'LONELINESS', 'DOUBT', 'CONDEMNING']
+    table_name = ['MOOD', 'CALMNESS', 'PRODUCTIVITY', 'ENVIRONMENT', 'SELF_CONFIDENCE', 'PACIFICATION',
+                  'SELF_SATISFACTION']
 
     sql1, data1 = 'INSERT INTO CheckUp (user_id, type_of_graph, date, score) values(?, ?, ?, ?)', []
     data1.append((person_id, table_name[number], now, point))
