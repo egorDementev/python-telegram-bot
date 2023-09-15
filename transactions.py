@@ -20,7 +20,6 @@ async def insert_into_tran(user_id, psy_id, count_consults, comment):
 
     data.append((tran_id, user_id, str(datetime.today().date().isoformat()), str(datetime.today().time().isoformat()),
                  psy_id, count_consults, comment))
-    print(data)
 
     with con:
         con.executemany(sql1, data)

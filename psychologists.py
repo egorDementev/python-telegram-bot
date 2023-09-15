@@ -95,7 +95,6 @@ async def done_con(callback_query: types.CallbackQuery):
     con = get_data_base_object()
 
     con_id = callback_query.data.split('_')[-1]
-    print(con_id)
 
     with con:
         con.execute(f"UPDATE Consultation SET is_done={1} WHERE id={con_id}")

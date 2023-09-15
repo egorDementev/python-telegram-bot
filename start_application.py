@@ -55,7 +55,6 @@ async def user_account(callback_query: types.CallbackQuery):
     with con:
         list_con = list(con.execute(f"SELECT tran_id, number FROM Consultation WHERE is_done='0'"))
 
-    print(list_con)
 
     for i in list_con:
         with con:
@@ -76,10 +75,8 @@ async def user_account(callback_query: types.CallbackQuery):
 
     if future_diagnostics:
         for x in future_diagnostics:
-            print(x)
             with con:
                 psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]};"))[0][0]
-            print(psy_name)
             mess = "🧩 Диагностическая встреча\nПсихолог: " + psy_name + "\nДата встречи: " + \
                    x[1][8:] + "." + x[1][5:7] + "." + x[1][:4] + "\nПсихолог с вами обязательно свяжется заранее, " \
                                                                  "чтобы обсудить время проведения консультации 💖\n" \
@@ -89,7 +86,6 @@ async def user_account(callback_query: types.CallbackQuery):
             await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
 
         for x in future_consultations:
-            print(x)
             with con:
                 psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]}"))[0][0]
             mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации с пакете: " + \
@@ -105,7 +101,6 @@ async def user_problems(message: types.Message):
 
     with con:
         psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
-        print(psycho_list)
 
     if message.text[:3] == 'add' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
                                       == '840638420'):

@@ -44,7 +44,6 @@ async def show_psycho_consultations(callback_query: types.CallbackQuery):
     for x in lst:
         with con:
             data = list(con.execute(f"SELECT date, time FROM Slot WHERE psycho_id={psy_id} and id={x[0]}"))
-            print(data)
         if data[0][0] is not None:
             st += str(data[0][0]) + " " + str(data[0][1]) + "\n"
 

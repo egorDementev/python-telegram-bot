@@ -114,7 +114,6 @@ def create_graphs(user_id):
         with con:
             all_data = list(con.execute(f"SELECT score, date FROM CheckUp WHERE user_id='{user_id}' and "
                                         f"type_of_graph='{table_name[i]}'"))
-            print(all_data)
             lst = [-1, -1, -1, -1, -1, -1, -1]
             for x in range(7):
                 if len(all_data) > x:
