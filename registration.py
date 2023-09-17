@@ -1,6 +1,6 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from database.work_with_db import if_register, add_new_person
 from data_provider import get_contract_kb, get_start_kb, get_go_to_menu_kb, get_bot_token
 
@@ -81,8 +81,43 @@ async def start_bot(callback_query: types.CallbackQuery):
 
         await bot.send_media_group(callback_query.from_user.id, media=media)
 
-        await bot.send_message(callback_query.from_user.id, 'Теперь переходи в главное меню',
-                               reply_markup=get_go_to_menu_kb())
+        kb = InlineKeyboardMarkup()
+        kb.add(InlineKeyboardButton('🔜 Продолжить', callback_data='subscribe'))
+        await bot.send_message(callback_query.from_user.id, 'Давай продолжим регистрацию!',
+                               reply_markup=kb)
+
+
+async def subscribe(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    message = 'Для дальнейшей работы с нашим ботом, тебе нужно подписаться на наш телеграм канал, в котором мы ' \
+              'регулярно публикуем:\n🔹 ответы психологов на ваши вопросы\n🔹 советы по "выживанию" для студентов\n🔹 ' \
+              'поднимаем много актуальных тем, которые многим из вас откликнутся'
+
+    kb = InlineKeyboardMarkup()
+    kb.add(InlineKeyboardButton('🔔 Подписаться на канал', url='https://t.me/connectionBotChannel'))
+    kb.add(InlineKeyboardButton('✅ Проверить подписку', callback_data='s_check'))
+
+    await callback_query.message.answer_photo(open('resources/pictures/tg.png', "rb"), caption=message,
+                                              reply_markup=kb)
+
+
+async def check_subscribe(callback_query: types.CallbackQuery):
+
+    user_channel_status = await bot.get_chat_member(chat_id=-1001737343585,
+                                                    user_id=callback_query.from_user.id)
+    if user_channel_status["status"] != 'left':
+        await successful_subscribe(callback_query)
+    else:
+        await bot.send_message(callback_query.from_user.id, "Похоже, что вы не подписаны на канал...\nПодпишитесь, "
+                                                            "и повторите попытку еще раз ❤️")
+
+
+async def successful_subscribe(callback_query: types.CallbackQuery):
+    await callback_query.message.delete()
+
+    await bot.send_message(callback_query.from_user.id, 'Спасибо ❤️\nТеперь можешь переходить в главное меню!',
+                           reply_markup=get_go_to_menu_kb())
 
 
 def init_registration(telegram_bot, dispatcher):
@@ -93,3 +128,6 @@ def init_registration(telegram_bot, dispatcher):
 
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('attach'))(attach)
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('run'))(start_bot)
+    dp.callback_query_handler(lambda c: c.data and c.data.startswith('subscribe'))(subscribe)
+    dp.callback_query_handler(lambda c: c.data and c.data.startswith('s_check'))(check_subscribe)
+

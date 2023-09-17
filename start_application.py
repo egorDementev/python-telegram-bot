@@ -55,7 +55,6 @@ async def user_account(callback_query: types.CallbackQuery):
     with con:
         list_con = list(con.execute(f"SELECT tran_id, number FROM Consultation WHERE is_done='0'"))
 
-
     for i in list_con:
         with con:
             lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={int(i[0])}"))
