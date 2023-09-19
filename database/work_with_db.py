@@ -6,11 +6,11 @@ con = get_data_base_object()
 cur = con.cursor()
 
 
-def add_new_person(person_id):
+def add_new_person(person_id, url):
     global con
 
-    sql1, data = 'INSERT INTO Person (id, date) values(?, ?)', []
-    data.append((person_id, str(datetime.datetime.now().date())))
+    sql1, data = 'INSERT INTO Person (id, date, url) values(?, ?, ?)', []
+    data.append((person_id, str(datetime.datetime.now().date()), url))
     print(data)
 
     with con:

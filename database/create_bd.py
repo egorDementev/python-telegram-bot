@@ -25,7 +25,14 @@ with con:
     con.execute("""
         CREATE TABLE IF NOT EXISTS Person(
             id INTEGER UNIQUE NOT NULL,
-            date TEXT NOT NULL
+            date TEXT NOT NULL,
+            url TEXT NOT NULL,
+            name TEXT DEFAULT('-'),
+            age TEXT DEFAULT('-'),
+            city TEXT DEFAULT('-'),
+            university TEXT DEFAULT('-'),
+            problem TEXT DEFAULT('-'),
+            promo_code TEXT DEFAULT('-')
         );
     """)
 
