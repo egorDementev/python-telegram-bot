@@ -1,3 +1,5 @@
+from sqlite3 import OperationalError
+
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
@@ -6,6 +8,8 @@ from aiogram.types import InlineKeyboardMarkup
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
+
+admins_id_list = ['596752948', '840638420']
 
 
 # самое первое сообщение при старте бота
@@ -106,40 +110,75 @@ async def send_guide(callback_query: types.CallbackQuery):
         con.execute(f"UPDATE Person SET get_guide={1} WHERE id={callback_query.from_user.id};")
 
 
-# обработка текстовых сообщений
-async def user_problems(message: types.Message):
+# функция предоставляет администратору данные, полученные sql-запросом
+async def sql_request(request, admin_id):
+    con = get_data_base_object()
+
+    try:
+        with con:
+            answer = str(list(con.execute(request)))
+
+        await bot.send_message(admin_id, answer, reply_markup=None)
+
+    except OperationalError:
+        await bot.send_message(admin_id, "Ошибка внутри запроса", reply_markup=None)
+
+
+# функция добавляет нового психолога в базу данных
+async def add_new_psychologist(data, admin_id):
+    con = get_data_base_object()
+
+    sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo) values(?, ?, ?, ?)', []
+    data1.append((data[1], data[2], data[3], 'нет фото'))
+
+    with con:
+        con.executemany(sql1, data1)
+
+    await bot.send_message(admin_id, 'Теперь отправь сюда фото психолога (не как файл)',
+                           reply_markup=get_go_to_menu_kb())
+
+
+# функция удаляет психолого из базы данных
+async def delete_psychologist(data, admin_id):
     con = get_data_base_object()
 
     with con:
-        psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+        con.execute(f"DELETE from Psychologist WHERE id='{data}'")
 
-    if message.text[:3] == 'add' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
-                                      == '840638420'):
+    await bot.send_message(admin_id, 'Психолог удален')
+
+
+# функция делает текстовую рассылку по всем пользователям
+async def mailing(data):
+    con = get_data_base_object()
+
+    with con:
+        user_list = list(con.execute(f"SELECT id FROM Person"))
+
+    for user in user_list:
+        await bot.send_message(user[0], data)
+
+
+# обработка текстовых сообщений
+async def user_problems(message: types.Message):
+    # con = get_data_base_object()
+
+    # with con:
+    #     psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+
+    if message.text[:3] == 'add' and str(message.from_user.id) in admins_id_list:
         mass = message.text.split('/')
-        sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo) values(?, ?, ?, ?)', []
-        data1.append((mass[1], mass[2], mass[3], 'нет фото'))
+        await add_new_psychologist(mass, message.from_user.id)
 
-        with con:
-            con.executemany(sql1, data1)
+    elif message.text[:3] == 'del' and str(message.from_user.id) in admins_id_list:
+        await delete_psychologist(message.text[4:], message.from_user.id)
 
-        await bot.send_message(message.from_user.id, '10x', reply_markup=get_go_to_menu_kb())
-    elif message.text[:3] == 'del' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
-                                        == '840638420'):
-
-        with con:
-            con.execute(f"DELETE from Psychologist WHERE id='{message.text[4:]}'")
-
-        await bot.send_message(message.from_user.id, 'Психолог удален')
-
-    elif message.text[:3] == 'all' and (str(message.from_user.id) == '596752948' or str(message.from_user.id)
-                                        == '840638420'):
+    elif message.text[:3] == 'all' and str(message.from_user.id) in admins_id_list:
         mass = message.text.split('/')
+        await mailing(mass[1])
 
-        with con:
-            user_list = list(con.execute(f"SELECT id FROM Person"))
-
-        for user in user_list:
-            await bot.send_message(user[0], mass[1])
+    elif message.text[:3] == 'sql' and str(message.from_user.id) in admins_id_list:
+        await sql_request(message.text[4:], message.from_user.id)
     else:
         await bot.send_message(message.from_user.id, 'Некорректный ввод данных. Попробуйте снова',
                                reply_markup=get_go_to_menu_kb())
