@@ -131,32 +131,44 @@ async def add_new_psychologist(data, admin_id):
     sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo) values(?, ?, ?, ?)', []
     data1.append((data[1], data[2], data[3], 'нет фото'))
 
-    with con:
-        con.executemany(sql1, data1)
+    try:
+        with con:
+            con.executemany(sql1, data1)
 
-    await bot.send_message(admin_id, 'Теперь отправь сюда фото психолога (не как файл)',
-                           reply_markup=get_go_to_menu_kb())
+        await bot.send_message(admin_id, 'Теперь отправь сюда фото психолога (не как файл)',
+                               reply_markup=get_go_to_menu_kb())
+    except OperationalError:
+        await bot.send_message(admin_id, "Неизвестная ошибка...", reply_markup=None)
 
 
 # функция удаляет психолого из базы данных
 async def delete_psychologist(data, admin_id):
     con = get_data_base_object()
 
-    with con:
-        con.execute(f"DELETE from Psychologist WHERE id='{data}'")
+    try:
+        with con:
+            con.execute(f"DELETE from Psychologist WHERE id='{data}'")
 
-    await bot.send_message(admin_id, 'Психолог удален')
+        await bot.send_message(admin_id, 'Психолог удален')
+
+    except OperationalError:
+        await bot.send_message(admin_id, "Неизвестная ошибка...", reply_markup=None)
 
 
 # функция делает текстовую рассылку по всем пользователям
 async def mailing(data):
     con = get_data_base_object()
 
-    with con:
-        user_list = list(con.execute(f"SELECT id FROM Person"))
+    try:
+        with con:
+            user_list = list(con.execute(f"SELECT id FROM Person"))
 
-    for user in user_list:
-        await bot.send_message(user[0], data)
+        for user in user_list:
+            await bot.send_message(user[0], data)
+
+    except OperationalError:
+        for user in admins_id_list:
+            await bot.send_message(user, "Неизвестная ошибка...", reply_markup=None)
 
 
 # обработка текстовых сообщений
