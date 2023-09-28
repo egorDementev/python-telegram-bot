@@ -15,7 +15,11 @@ async def my_feeling(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     await callback_query.message.answer_photo(open("resources/pictures/check_up.png", "rb"),
                                               caption='Давай вспомним, как прошел твой день ❤️\n'
-                                                      'Тут ты можешь порефлексировать и оценить свое состояние!',
+                                                      'Тут ты можешь порефлексировать и оценить свое состояние!\n\n'
+                                                      'А если ты не знаешь, зачем отвечать на вопросы из бота, '
+                                                      'и может ли саморефлексия ухудшить состояние человека, '
+                                                      'то советуем прочитать статью на нашем сайте, в которой '
+                                                      'мы ответили на эти вопросы!',
                                               reply_markup=get_check_up_kb())
 
 

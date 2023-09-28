@@ -32,7 +32,8 @@ with con:
             city TEXT DEFAULT('-'),
             university TEXT DEFAULT('-'),
             problem TEXT DEFAULT('-'),
-            promo_code TEXT DEFAULT('-')
+            promo_code TEXT DEFAULT('-'),
+            get_guide INTEGER NOT NULL DEFAULT(0)
         );
     """)
 

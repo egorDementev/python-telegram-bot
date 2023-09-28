@@ -94,6 +94,18 @@ async def user_account(callback_query: types.CallbackQuery):
             await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
 
 
+async def send_guide(callback_query: types.CallbackQuery):
+    con = get_data_base_object()
+
+    await bot.send_document(callback_query.from_user.id, open("resources/documents/как не увязать в рутине и "
+                                                              "учебе и проживать студенческую жизнь ярко.pdf", "rb"),
+                            caption="Наша команда очень надеется, что данный гайд окажется полезным для тебя ❤️",
+                            reply_markup=None)
+
+    with con:
+        con.execute(f"UPDATE Person SET get_guide={1} WHERE id={callback_query.from_user.id};")
+
+
 # обработка текстовых сообщений
 async def user_problems(message: types.Message):
     con = get_data_base_object()
@@ -142,4 +154,5 @@ def init_start_application(telegram_bot, dispatcher):
     dp.message_handler(commands=['start', 'help'])(start)
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('menu'))(home_page)
     dp.callback_query_handler(lambda c: c.data and c.data.startswith('user_account'))(user_account)
+    dp.callback_query_handler(lambda c: c.data and c.data.startswith('guide'))(send_guide)
     dp.message_handler()(user_problems)

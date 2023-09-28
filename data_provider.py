@@ -37,6 +37,7 @@ def get_main_buttons_kb() -> list:
         InlineKeyboardButton('👤 Мой кабинет', callback_data='user_account'),
         InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
         # InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
+        InlineKeyboardButton('🎁 Получить гайд!', callback_data='guide'),
         InlineKeyboardButton('⚙️ Техподдержка', callback_data='support'),
         # InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
         InlineKeyboardButton('⚙️ Кабинет администратора', callback_data='admin')]
@@ -104,6 +105,7 @@ def get_check_up_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(row_width=1).add(
         InlineKeyboardButton('🗸 Отследить состояние', callback_data='chk1'),
         InlineKeyboardButton('📈 Посмотреть мои графики', callback_data='chk2'),
+        InlineKeyboardButton('📖 Прочитать статью', url='http://connection.online.tilda.ws/self_reflection'),
         InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
 
