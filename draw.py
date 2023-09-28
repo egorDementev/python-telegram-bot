@@ -73,6 +73,7 @@ def draw_point(path, width, height, day, mark):
                  fill=ImageColor.getcolor("#FF8C00", "RGB"), width=5)
 
     image.save(path, "PNG")
+    image.close()
 
 
 def draw_graph(path, width, height, list_points):
@@ -90,6 +91,9 @@ def draw_graph(path, width, height, list_points):
             list_del.append(i)
     for i in list_del[::-1]:
         del list_points[i]
+
+    image = Image.open(path)
+    draw = ImageDraw.Draw(image)
 
     for i in range(len(list_points) - 1):
         draw.line((list_cor_x[list_points[i][0]], list_cor_y[4 - list_points[i][1]], list_cor_x[list_points[i + 1][0]],
