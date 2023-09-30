@@ -2,9 +2,11 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 
 from data_provider import get_go_to_menu_kb, get_data_base_object, get_check_up_kb, get_check_kb, get_questions, \
-    get_bot_token
+    get_bot_token, get_super_admin_id
 from database.work_with_db import if_check, count_today_check_ups, write_check_up
 from draw import create_graphs, photo_del
+from datetime import datetime
+from start_application import write_log_to_file
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -49,7 +51,6 @@ async def process_check_up(callback_query: types.CallbackQuery):
     if count < 6:
         await bot.send_message(callback_query.from_user.id, get_questions()[count], reply_markup=get_check_kb())
     else:
-
         create_graphs(callback_query.from_user.id)
         media = types.MediaGroup()
         media.attach_photo(types.InputFile('resources/pictures/check_up.png'))
@@ -58,6 +59,13 @@ async def process_check_up(callback_query: types.CallbackQuery):
         await send_check_ups(callback_query)
 
         photo_del(callback_query.from_user.id)
+
+        log_text = f"LOG: make_check_up [{datetime.now().isoformat()}] " \
+                   f"UserID={callback_query.from_user.id} " \
+                   f"UserURL={f'https://t.me/{callback_query.from_user.username if callback_query.from_user.username else None}'}"
+
+        await bot.send_message(get_super_admin_id(), log_text, reply_markup=None)
+        await write_log_to_file('logs.txt', log_text)
 
 
 # функция, которая отвечает за проверку, проходил ли человек чек-ап и вывод прошлых результатов

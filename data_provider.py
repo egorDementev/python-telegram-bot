@@ -145,6 +145,10 @@ def get_admin_list() -> list:
     return ['596752948']  # , '840638420']
 
 
+def get_super_admin_id():
+    return '596752948'
+
+
 # возвращает объект для работы с базой данных
 def get_data_base_object():
     return sl.connect('resources/db//connection.db')

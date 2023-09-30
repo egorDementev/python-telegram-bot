@@ -4,13 +4,21 @@ import aiogram.utils.exceptions
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
-    get_go_to_menu_kb, get_bot_token
+    get_go_to_menu_kb, get_bot_token, get_super_admin_id
 from aiogram.types import InlineKeyboardMarkup
+from datetime import datetime
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
 
 admins_id_list = get_admin_list()
+
+
+async def write_log_to_file(file_name, log_text):
+    file = open(file_name, 'a')
+    file.write("\n")
+    file.write(log_text)
+    file.close()
 
 
 # самое первое сообщение при старте бота
@@ -21,6 +29,12 @@ async def start(message: types.Message):
                            '‼️ Бот запущен в тестовом режиме, при возникновении каких-либо проблем просим писать '
                            'в тех.поддержку!!',
                            reply_markup=get_continue_kb())
+    log_text = f"LOG: open_bot [{datetime.now().isoformat()}] " \
+               f"UserID={message.from_user.id} " \
+               f"UserURL={f'https://t.me/{message.from_user.username if message.from_user.username else None}'}"
+
+    await bot.send_message(get_super_admin_id(), log_text, reply_markup=None)
+    await write_log_to_file('logs.txt', log_text)
 
 
 # главное меню
@@ -57,46 +71,59 @@ async def user_account(callback_query: types.CallbackQuery):
     future_consultations = []
     future_diagnostics = []
 
-    with con:
-        list_con = list(con.execute(f"SELECT tran_id, number FROM Consultation WHERE is_done='0'"))
+    try:
 
-    for i in list_con:
         with con:
-            lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={int(i[0])}"))
-        if str(lst[0][0]) == str(callback_query.from_user.id):
-            if i[1] == 0:
-                with con:
-                    future_diagnostics.append(list(con.execute(f"SELECT psy_id, comment FROM "
-                                                               f"Transactions WHERE id={int(i[0])};"))[0])
-            else:
-                with con:
-                    future_consultations.append([list(con.execute(f"SELECT psy_id FROM Transactions "
-                                                                  f"WHERE id={int(i[0])};"))[0][0], i[1]])
+            list_con = list(con.execute(f"SELECT tran_id, number FROM Consultation WHERE is_done='0'"))
 
-    message = "Привет 😊\nВ личном кабинете будут отображаться консультации, на которые ты записался(лась)!"
-    await callback_query.message.answer_photo(open('resources/pictures/user.png', "rb"), caption=message,
-                                              reply_markup=get_go_to_menu_kb())
-
-    if future_diagnostics:
-        for x in future_diagnostics:
+        for i in list_con:
             with con:
-                psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]};"))[0][0]
-            mess = "🧩 Диагностическая встреча\nПсихолог: " + psy_name + "\nДата встречи: " + \
-                   x[1] + "\nПсихолог с вами обязательно свяжется заранее, " \
-                          "чтобы обсудить время проведения консультации 💖\n" \
-                          "Если у вас есть какие-либо вопросы, или вам нужно " \
-                          "связаться с психологом, то напишите, " \
-                          "пожалуйста в тех. поддержку!"
-            await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+                lst = list(con.execute(f"SELECT user_id FROM Transactions WHERE id={int(i[0])}"))
+            if str(lst[0][0]) == str(callback_query.from_user.id):
+                if i[1] == 0:
+                    with con:
+                        future_diagnostics.append(list(con.execute(f"SELECT psy_id, comment FROM "
+                                                                   f"Transactions WHERE id={int(i[0])};"))[0])
+                else:
+                    with con:
+                        future_consultations.append([list(con.execute(f"SELECT psy_id FROM Transactions "
+                                                                      f"WHERE id={int(i[0])};"))[0][0], i[1]])
 
-        for x in future_consultations:
-            with con:
-                psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]}"))[0][0]
-            mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации в пакете: " + \
-                   str(x[1]) + "\nПсихолог обязательно с вами свяжется заранее, чтобы обсудить время проведения " \
-                               "консультации ❤️\nЕсли у вас есть какие-то вопросы, или вам нужно связаться с " \
-                               "психологом, то напишите в тех. поддержку!"
-            await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+        message = "Привет 😊\nВ личном кабинете будут отображаться консультации, на которые ты записался(лась)!"
+        await callback_query.message.answer_photo(open('resources/pictures/user.png', "rb"), caption=message,
+                                                  reply_markup=get_go_to_menu_kb())
+
+        if future_diagnostics:
+            for x in future_diagnostics:
+                with con:
+                    psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]};"))[0][0]
+                mess = "🧩 Диагностическая встреча\nПсихолог: " + psy_name + "\nДата встречи: " + \
+                       x[1] + "\nПсихолог с вами обязательно свяжется заранее, " \
+                              "чтобы обсудить время проведения консультации 💖\n" \
+                              "Если у вас есть какие-либо вопросы, или вам нужно " \
+                              "связаться с психологом, то напишите, " \
+                              "пожалуйста в тех. поддержку!"
+                await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+
+            for x in future_consultations:
+                with con:
+                    psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]}"))[0][0]
+                mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации в пакете: " + \
+                       str(x[1]) + "\nПсихолог обязательно с вами свяжется заранее, чтобы обсудить время проведения " \
+                                   "консультации ❤️\nЕсли у вас есть какие-то вопросы, или вам нужно связаться с " \
+                                   "психологом, то напишите в тех. поддержку!"
+                await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
+    except OperationalError:
+        await bot.send_message(callback_query.from_user.id, "Похоже, что-то пошло не так...\n"
+                                                            "Пожалуйста, сообщите о вашей проблеме в тех.поддержку",
+                               reply_markup=get_go_to_menu_kb())
+
+        error_text = f"ERROR: personal_account_error [{datetime.now().isoformat()}] " \
+                     f"UserID={callback_query.from_user.id} " \
+                     f"UserURL={f'https://t.me/{callback_query.from_user.username if callback_query.from_user.username else None}'}"
+
+        await bot.send_message(get_super_admin_id(), error_text, reply_markup=None)
+        await write_log_to_file('errors.txt', error_text)
 
 
 async def send_guide(callback_query: types.CallbackQuery):
@@ -109,6 +136,13 @@ async def send_guide(callback_query: types.CallbackQuery):
 
     with con:
         con.execute(f"UPDATE Person SET get_guide={1} WHERE id={callback_query.from_user.id};")
+
+    log_text = f"LOG: received_guide [{datetime.now().isoformat()}] " \
+               f"UserID={callback_query.from_user.id} " \
+               f"UserURL={f'https://t.me/{callback_query.from_user.username if callback_query.from_user.username else None}'}"
+
+    await bot.send_message(get_super_admin_id(), log_text, reply_markup=None)
+    await write_log_to_file('logs.txt', log_text)
 
 
 # функция предоставляет администратору данные, полученные sql-запросом
@@ -226,6 +260,13 @@ async def user_problems(message: types.Message):
             await send_message(message.text.split('/'))
         except aiogram.utils.exceptions.ChatNotFound:
             await bot.send_message(message.from_user.id, 'Произошла ошибка...')
+
+            error_text = f"ERROR: send_message_error [{datetime.now().isoformat()}] " \
+                         f"UserID={message.from_user.id} " \
+                         f"toUser={message.text.split('/')[1]}"
+
+            await bot.send_message(get_super_admin_id(), error_text, reply_markup=None)
+            await write_log_to_file('errors.txt', error_text)
     elif str(message.from_user.id) in psycho_list:
         try:
             await set_date_time_of_consultation(message.text.split('/')[0], message.text.split('/')[1:])

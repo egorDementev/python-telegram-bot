@@ -2,7 +2,9 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from database.work_with_db import if_register, add_new_person
-from data_provider import get_contract_kb, get_start_kb, get_go_to_menu_kb, get_bot_token
+from data_provider import get_contract_kb, get_start_kb, get_go_to_menu_kb, get_bot_token, get_super_admin_id
+from datetime import datetime
+from start_application import write_log_to_file
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -47,6 +49,13 @@ async def attach(callback_query: types.CallbackQuery):
         await send_agreement_message(callback_query, InlineKeyboardMarkup().add(get_contract_kb()[3]))
         await bot.send_message(callback_query.from_user.id, "Отлично, теперь можем продолжить!",
                                reply_markup=get_start_kb())
+
+        log_text = f"LOG: accept [{datetime.now().isoformat()}] " \
+                   f"UserID={callback_query.from_user.id} " \
+                   f"UserURL={f'https://t.me/{callback_query.from_user.username if callback_query.from_user.username else None}'}"
+
+        await bot.send_message(get_super_admin_id(), log_text, reply_markup=None)
+        await write_log_to_file('logs.txt', log_text)
 
 
 # регистрация пользователя, если его еще нет в базе данных
@@ -121,6 +130,13 @@ async def successful_subscribe(callback_query: types.CallbackQuery):
 
     await bot.send_message(callback_query.from_user.id, 'Спасибо ❤️\nТеперь можешь переходить в главное меню!',
                            reply_markup=get_go_to_menu_kb())
+
+    log_text = f"LOG: registered [{datetime.now().isoformat()}] " \
+               f"UserID={callback_query.from_user.id} " \
+               f"UserURL={f'https://t.me/{callback_query.from_user.username if callback_query.from_user.username else None}'}"
+
+    await bot.send_message(get_super_admin_id(), log_text, reply_markup=None)
+    await write_log_to_file('logs.txt', log_text)
 
 
 def init_registration(telegram_bot, dispatcher):
