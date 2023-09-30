@@ -56,12 +56,12 @@ async def create_consult(tran_id, user_id):
         comment = str(list(con.execute(f"SELECT comment FROM Transactions WHERE id={tran_id};"))[0][0])
         psy_id = int(list(con.execute(f"SELECT psy_id FROM Transactions WHERE id={tran_id};"))[0][0])
 
-    sql1 = 'INSERT INTO Consultation (id, tran_id, number, is_done) ' \
-           'values(?, ?, ?, ?)'
+    sql1 = 'INSERT INTO Consultation (id, tran_id, number, is_done, date_time) ' \
+           'values(?, ?, ?, ?, ?)'
 
     if number == 0:
         data = []
-        data.append((con_id, tran_id, number, 0))
+        data.append((con_id, tran_id, number, 0, comment))
 
         with con:
             con.executemany(sql1, data)
@@ -78,7 +78,7 @@ async def create_consult(tran_id, user_id):
     else:
         for i in range(number):
             data = []
-            data.append((con_id, tran_id, i + 1, 0))
+            data.append((con_id, tran_id, i + 1, 0, comment))
             con_id += 1
 
             with con:

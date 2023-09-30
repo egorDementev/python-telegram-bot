@@ -18,7 +18,8 @@ with con:
             id INTEGER PRIMARY KEY UNIQUE NOT NULL, 
             tran_id INTEGER REFERENCES Transactions(id) NOT NULL, 
             number INTEGER NOT NULL, 
-            is_done INTEGER NOT NULL DEFAULT(0)
+            is_done INTEGER NOT NULL DEFAULT(0),
+            date_time TEXT NOT NULL DEFAULT('-')
         );
     """)
 
