@@ -1,0 +1,15 @@
+
+LOG: open_bot [2023-09-30T16:14:06.910762] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: accept [2023-09-30T16:14:13.198239] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: registered [2023-09-30T16:14:21.665837] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: open_bot [2023-09-30T16:22:46.098717] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: accept [2023-09-30T16:22:50.994716] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: registered [2023-09-30T16:23:00.350217] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: open_bot [2023-09-30T16:26:17.167078] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: accept [2023-09-30T16:26:35.298457] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: registered [2023-09-30T16:26:54.855055] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: open_bot [2023-09-30T16:35:57.411844] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: accept [2023-09-30T16:36:03.339633] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: registered [2023-09-30T16:36:11.679496] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: make_check_up [2023-09-30T16:37:39.376579] UserID=596752948 UserURL=https://t.me/egor_dementev
+LOG: received_guide [2023-09-30T16:38:13.359928] UserID=596752948 UserURL=https://t.me/egor_dementev

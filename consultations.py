@@ -71,7 +71,8 @@ async def psycho(callback_query: types.CallbackQuery):
     but.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
     await callback_query.message.answer_photo(open('psy_photo//' + str(list_psy[code][0]) + '.jpg', "rb"),
-                                              caption=(list_psy[code][1] + '\n' + list_psy[code][2]),
+                                              caption=(list_psy[code][1] + '\n\n' + list_psy[code][2] + '\n\n' +
+                                                       list_psy[code][3]),
                                               reply_markup=but)
 
 

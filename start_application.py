@@ -163,8 +163,8 @@ async def sql_request(request, admin_id):
 async def add_new_psychologist(data, admin_id):
     con = get_data_base_object()
 
-    sql1, data1 = 'INSERT INTO Psychologist (id, name, about, photo) values(?, ?, ?, ?)', []
-    data1.append((data[1], data[2], data[3], 'нет фото'))
+    sql1, data1 = 'INSERT INTO Psychologist (id, name, about, work, photo) values(?, ?, ?, ?, ?)', []
+    data1.append((data[1], data[2], data[3], data[4], 'нет фото'))
 
     try:
         with con:

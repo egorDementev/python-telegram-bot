@@ -43,6 +43,7 @@ with con:
             id INTEGER PRIMARY KEY UNIQUE NOT NULL,
             name TEXT NOT NULL,
             about TEXT NOT NULL, 
+            work TEXT NOT NULL,
             photo TEXT NOT NULL
         );
     """)
