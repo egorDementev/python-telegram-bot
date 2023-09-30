@@ -1,5 +1,6 @@
 from sqlite3 import OperationalError
 
+import aiogram.utils.exceptions
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
@@ -194,6 +195,12 @@ async def set_date_time_of_consultation(con_id, date_time):
                                       f"консультации: {date_time}")
 
 
+async def send_message(data):
+    user_id, text = data[1], data[2]
+
+    await bot.send_message(user_id, text)
+
+
 # обработка текстовых сообщений
 async def user_problems(message: types.Message):
     con = get_data_base_object()
@@ -214,6 +221,11 @@ async def user_problems(message: types.Message):
 
     elif message.text[:3] == 'sql' and str(message.from_user.id) in admins_id_list:
         await sql_request(message.text[4:], message.from_user.id)
+    elif message.text[:4] == 'send' and str(message.from_user.id) in admins_id_list:
+        try:
+            await send_message(message.text.split('/'))
+        except aiogram.utils.exceptions.ChatNotFound:
+            await bot.send_message(message.from_user.id, 'Произошла ошибка...')
     elif str(message.from_user.id) in psycho_list:
         try:
             await set_date_time_of_consultation(message.text.split('/')[0], message.text.split('/')[1:])

@@ -57,7 +57,10 @@ async def start_bot(callback_query: types.CallbackQuery):
         await bot.send_message(callback_query.from_user.id, 'Вы уже зарегистрированы в боте ❤️',
                                reply_markup=get_go_to_menu_kb())
     else:
-        add_new_person(callback_query.from_user.id, f"https://t.me/{callback_query.from_user.username}")
+        add_new_person(
+            callback_query.from_user.id,
+            f"https://t.me/"
+            f"{callback_query.from_user.username if callback_query.from_user.username else 'нет имени пользователя'}")
 
         await bot.send_message(callback_query.from_user.id, 'Спасибо, что доверился(лась) нам ❤',
                                reply_markup=None)
