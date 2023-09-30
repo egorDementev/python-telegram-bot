@@ -34,13 +34,13 @@ async def home_page(callback_query: types.CallbackQuery):
     if str(callback_query.from_user.id) in get_admin_list():
         main_menu.add(all_main_buttons[-1])
 
-    # with con:
-    #     psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+    with con:
+        psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
 
-    # if str(callback_query.from_user.id) in psycho_list:
-    #     main_menu.add(all_main_buttons[-2])
+    if str(callback_query.from_user.id) in psycho_list:
+        main_menu.add(all_main_buttons[-2])
 
-    for x in range(len(all_main_buttons) - 1):
+    for x in range(len(all_main_buttons) - 2):
         main_menu.add(all_main_buttons[x])
     await callback_query.message.answer_photo(open("resources/pictures/logo.png", "rb"),
                                               caption='Привет 👋\nБлагодарим за доверие к нашему сервису ❤️',
@@ -81,11 +81,11 @@ async def user_account(callback_query: types.CallbackQuery):
             with con:
                 psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]};"))[0][0]
             mess = "🧩 Диагностическая встреча\nПсихолог: " + psy_name + "\nДата встречи: " + \
-                   x[1][8:] + "." + x[1][5:7] + "." + x[1][:4] + "\nПсихолог с вами обязательно свяжется заранее, " \
-                                                                 "чтобы обсудить время проведения консультации 💖\n" \
-                                                                 "Если у вас есть какие-либо вопросы, или вам нужно " \
-                                                                 "связаться с психологом, то напишите, " \
-                                                                 "пожалуйста в тех. поддержку!"
+                   x[1] + "\nПсихолог с вами обязательно свяжется заранее, " \
+                          "чтобы обсудить время проведения консультации 💖\n" \
+                          "Если у вас есть какие-либо вопросы, или вам нужно " \
+                          "связаться с психологом, то напишите, " \
+                          "пожалуйста в тех. поддержку!"
             await bot.send_message(callback_query.from_user.id, mess, reply_markup=None)
 
         for x in future_consultations:
@@ -171,12 +171,24 @@ async def mailing(data):
             await bot.send_message(user, "Неизвестная ошибка...", reply_markup=None)
 
 
+async def set_date_time_of_consultation(con_id, date_time):
+    con = get_data_base_object()
+
+    date_time = '/'.join(date_time)
+    print(date_time)
+
+    with con:
+        con.execute(f"UPDATE Consultation SET date_time='{str(date_time)}' WHERE id={con_id};")
+        tran_id = list(con.execute(f"SELECT tran_id FROM Consultation WHERE id={con_id}"))[0][0]
+        con.execute(f"UPDATE Transactions SET comment='{str(date_time)}' WHERE id={tran_id};")
+
+
 # обработка текстовых сообщений
 async def user_problems(message: types.Message):
-    # con = get_data_base_object()
+    con = get_data_base_object()
 
-    # with con:
-    #     psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
+    with con:
+        psycho_list = [str(x[0]) for x in list(con.execute(f"SELECT id FROM Psychologist;"))]
 
     if message.text[:3] == 'add' and str(message.from_user.id) in admins_id_list:
         mass = message.text.split('/')
@@ -191,6 +203,14 @@ async def user_problems(message: types.Message):
 
     elif message.text[:3] == 'sql' and str(message.from_user.id) in admins_id_list:
         await sql_request(message.text[4:], message.from_user.id)
+    elif str(message.from_user.id) in psycho_list:
+        try:
+            await set_date_time_of_consultation(message.text.split('/')[0], message.text.split('/')[1:])
+            await bot.send_message(message.from_user.id, 'Успешно!', reply_markup=get_go_to_menu_kb())
+        except OperationalError:
+            await bot.send_message(message.from_user.id, "Произошла неизвестная ошибка ...",
+                                   reply_markup=get_go_to_menu_kb())
+
     else:
         await bot.send_message(message.from_user.id, 'Некорректный ввод данных. Попробуйте снова',
                                reply_markup=get_go_to_menu_kb())

@@ -36,10 +36,10 @@ def get_main_buttons_kb() -> list:
     return [
         InlineKeyboardButton('👤 Мой кабинет', callback_data='user_account'),
         InlineKeyboardButton('📅 Моё состояние', callback_data='my_feeling'),
-        # InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
+        InlineKeyboardButton('🙋‍♀️Обратиться к психологу', callback_data='need_help'),
         InlineKeyboardButton('🎁 Получить гайд!', callback_data='guide'),
         InlineKeyboardButton('⚙️ Техподдержка', callback_data='support'),
-        # InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
+        InlineKeyboardButton('⚙️ Кабинет психолога', callback_data='psycho'),
         InlineKeyboardButton('⚙️ Кабинет администратора', callback_data='admin')]
 
 
@@ -58,8 +58,8 @@ def get_admin_kb() -> InlineKeyboardMarkup:
 def get_psycho_kb() -> InlineKeyboardMarkup:
     psycho_kb = InlineKeyboardMarkup(row_width=1)
     psycho_kb.add(InlineKeyboardButton('⚙️ Текущие консультации', callback_data='my_consults'))
-    psycho_kb.add(InlineKeyboardButton('⚙️ Добавить слоты на неделю', callback_data='slot'))
-    psycho_kb.add(InlineKeyboardButton('⚙️ Удалить слот', callback_data='remove_slot'))
+    # psycho_kb.add(InlineKeyboardButton('⚙️ Добавить слоты на неделю', callback_data='slot'))
+    # psycho_kb.add(InlineKeyboardButton('⚙️ Удалить слот', callback_data='remove_slot'))
     psycho_kb.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
     return psycho_kb
 

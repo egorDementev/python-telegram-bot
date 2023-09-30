@@ -7,6 +7,11 @@ from data_provider import get_data_base_object, get_show_psycho_kb, get_bot_toke
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
 
+sites_about_psychologists = {'332399557': 'http://connection.online.tilda.ws/viktoria_vagapova',
+                             '12214445': 'http://connection.online.tilda.ws/anastasia_diveikina',
+                             '283800610': 'http://connection.online.tilda.ws/psychologist_natalia_kulikova',
+                             '596752948': 'https://t.me/egor_dementev'}
+
 
 # Функция, которая возвращает список из ближайших 7 дней без субботы и воскресенья
 def get_next_7_weekdays():
@@ -58,11 +63,11 @@ async def psycho(callback_query: types.CallbackQuery):
     code = int(callback_query.data[7:])
     but = InlineKeyboardMarkup(row_width=3)
 
-    but.add(InlineKeyboardButton('🗒 Подробно о психологе', url='https://t.me/egor_dementev'))
-    but.add(InlineKeyboardButton('👩 Записаться к психологу',
-                                 callback_data='psy_' + str(list_psy[code][0]) + '_' + str(code)))
-    but.add(InlineKeyboardButton('⬅️', callback_data='all_psy' + str((code - 1) % len(list_psy))))
-    but.add(InlineKeyboardButton('➡️', callback_data='all_psy' + str((code + 1) % len(list_psy))))
+    but.add(InlineKeyboardButton('🗒 Подробно о психологе', url=sites_about_psychologists[str(list_psy[code][0])]))
+    but.row(InlineKeyboardButton('⬅️', callback_data='all_psy' + str((code - 1) % len(list_psy))),
+            InlineKeyboardButton('👩 Выбрать',
+                                 callback_data='psy_' + str(list_psy[code][0]) + '_' + str(code)),
+            InlineKeyboardButton('➡️', callback_data='all_psy' + str((code + 1) % len(list_psy))))
     but.add(InlineKeyboardButton('➡️ Главное меню', callback_data='menu'))
 
     await callback_query.message.answer_photo(open('psy_photo//' + str(list_psy[code][0]) + '.jpg', "rb"),
@@ -78,7 +83,7 @@ async def choose_type(callback_query: types.CallbackQuery):
     psy_id = data[1]
     but = InlineKeyboardMarkup()
     but.add(InlineKeyboardButton('🧩 Диагностическая встреча', callback_data='diagnostic_' + psy_id))
-    but.add(InlineKeyboardButton('💖 Полноценная консультация', callback_data='makeConsultation_' + psy_id))
+    # but.add(InlineKeyboardButton('💖 Полноценная консультация', callback_data='makeConsultation_' + psy_id))
     but.add(InlineKeyboardButton('👩 Назад к психологам', callback_data='all_psy' + data[2]))
 
     await bot.send_message(callback_query.from_user.id,
