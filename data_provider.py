@@ -142,7 +142,7 @@ def get_questions() -> list:
 
 # список с админами сервиса
 def get_admin_list() -> list:
-    return ['596752948']  # , '840638420']
+    return ['596752948', '840638420']
 
 
 def get_super_admin_id():
