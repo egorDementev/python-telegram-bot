@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardMarkup
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
 
-admins_id_list = ['596752948', '840638420']
+admins_id_list = get_admin_list()
 
 
 # самое первое сообщение при старте бота
@@ -91,7 +91,7 @@ async def user_account(callback_query: types.CallbackQuery):
         for x in future_consultations:
             with con:
                 psy_name = list(con.execute(f"SELECT name FROM Psychologist WHERE id={x[0]}"))[0][0]
-            mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации с пакете: " + \
+            mess = "💖 Консультация с психологом\nПсихолог: " + psy_name + "\nНомер консультации в пакете: " + \
                    str(x[1]) + "\nПсихолог обязательно с вами свяжется заранее, чтобы обсудить время проведения " \
                                "консультации ❤️\nЕсли у вас есть какие-то вопросы, или вам нужно связаться с " \
                                "психологом, то напишите в тех. поддержку!"
@@ -181,6 +181,17 @@ async def set_date_time_of_consultation(con_id, date_time):
         con.execute(f"UPDATE Consultation SET date_time='{str(date_time)}' WHERE id={con_id};")
         tran_id = list(con.execute(f"SELECT tran_id FROM Consultation WHERE id={con_id}"))[0][0]
         con.execute(f"UPDATE Transactions SET comment='{str(date_time)}' WHERE id={tran_id};")
+        data = list(con.execute(f"SELECT user_id, psy_id FROM Transactions WHERE id={tran_id};"))[0]
+        psy_name = str(list(con.execute(f"SELECT name FROM Psychologist WHERE id={data[1]}"))[0][0])
+        user_url = str(list(con.execute(f"SELECT url FROM Person WHERE id={data[0]}"))[0][0])
+
+    await bot.send_message(data[0], f"Психолог - {psy_name} - изменил время консультации на {date_time}!\nЕсли "
+                                    f"у вас есть какие-то вопросы, то обратитесь в тех.поддержку!")
+
+    for admin in get_admin_list():
+        await bot.send_message(admin, f"ИЗМЕНЕНИЕ ВРЕМЕНИ КОНСУЛЬТАЦИИ\nКлиент: {user_url}\nUserId: {data[0]}\n"
+                                      f"Психолог: {psy_name}\nConsultationID: {con_id}\nДата и время "
+                                      f"консультации: {date_time}")
 
 
 # обработка текстовых сообщений

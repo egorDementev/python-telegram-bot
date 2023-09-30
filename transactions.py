@@ -3,7 +3,7 @@ from datetime import datetime
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 
-from data_provider import get_data_base_object, get_go_to_menu_kb, get_bot_token
+from data_provider import get_data_base_object, get_go_to_menu_kb, get_bot_token, get_admin_list
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -74,6 +74,13 @@ async def create_consult(tran_id, user_id):
         await bot.send_message(psy_id, f"Новый клиент записался к вам на диагностику на {comment}!\n"
                                        f"Подробную информацию можно посмотреть в кабинете психолога!",
                                reply_markup=get_go_to_menu_kb())
+
+        for admin in get_admin_list():
+            with con:
+                user_url = str(list(con.execute(f"SELECT url FROM Person WHERE id={user_id}"))[0][0])
+                psy_name = str(list(con.execute(f"SELECT name FROM Psychologist WHERE id={psy_id}"))[0][0])
+            await bot.send_message(admin, f"ЗАПИСЬ НА ДИАГНОСТИКУ\nКлиент: {user_url}\nUserID: {user_id}\nПсихолог: "
+                                          f"{psy_name}")
 
     else:
         for i in range(number):

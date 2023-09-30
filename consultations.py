@@ -8,7 +8,7 @@ bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
 
 sites_about_psychologists = {'332399557': 'http://connection.online.tilda.ws/viktoria_vagapova',
-                             '12214445': 'http://connection.online.tilda.ws/anastasia_diveikina',
+                             '807143565': 'http://connection.online.tilda.ws/anastasia_diveikina',
                              '283800610': 'http://connection.online.tilda.ws/psychologist_natalia_kulikova',
                              '596752948': 'https://t.me/egor_dementev'}
 
