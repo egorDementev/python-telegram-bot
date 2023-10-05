@@ -201,8 +201,12 @@ async def mailing(data):
             user_list = list(con.execute(f"SELECT id FROM Person"))
 
         for user in user_list:
-            await bot.send_message(user[0], data)
-
+            try:
+                chat_member = await bot.get_chat_member(user[0], bot.id)
+                if chat_member.status not in ['left', 'kicked']:
+                    await bot.send_message(user[0], data, reply_markup=get_start_kb())
+            except Exception as e:
+                print(f"Error sending message to user {user[0]}: {e}")
     except OperationalError:
         for user in admins_id_list:
             await bot.send_message(user, "Неизвестная ошибка...", reply_markup=None)
@@ -234,7 +238,7 @@ async def set_date_time_of_consultation(con_id, date_time):
 async def send_message(data):
     user_id, text = data[1], data[2]
 
-    await bot.send_message(user_id, text, reply_markup=get_start_kb())
+    await bot.send_message(user_id, text)
 
 
 # обработка текстовых сообщений
