@@ -2,7 +2,7 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from datetime import datetime, timedelta
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from data_provider import get_data_base_object, get_show_psycho_kb, get_bot_token
+from data_provider import get_data_base_object, get_show_psycho_kb, get_bot_token, is_can_be_deleted
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -36,7 +36,8 @@ def get_next_7_weekdays():
 
 # окно с отображением информации о консультациях
 async def need_help(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     await callback_query.message.answer_photo(open("resources/pictures/psy.png", "rb"),
                                               caption='Наша миссия - сделать тебя '
@@ -53,7 +54,8 @@ async def need_help(callback_query: types.CallbackQuery):
 
 # показ психологов
 async def psycho(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con = get_data_base_object()
 
@@ -78,7 +80,8 @@ async def psycho(callback_query: types.CallbackQuery):
 
 # выбор типа услуги психолога
 async def choose_type(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     data = callback_query.data.split('_')
     psy_id = data[1]
@@ -94,7 +97,8 @@ async def choose_type(callback_query: types.CallbackQuery):
 
 # выбор дня недели для диагностической встречи
 async def choose_day_for_diagnostic(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     psy_id = callback_query.data.split('_')[1]
 
@@ -114,7 +118,8 @@ async def choose_day_for_diagnostic(callback_query: types.CallbackQuery):
 
 # выбор пакета консультаций
 async def choose_tariff(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     psy_id = callback_query.data.split('_')[1]
 

@@ -1,7 +1,8 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from data_provider import get_admin_kb, get_data_base_object, get_go_to_menu_kb, get_admin_list, get_bot_token
+from data_provider import get_admin_kb, get_data_base_object, get_go_to_menu_kb, get_admin_list, get_bot_token, \
+    is_can_be_deleted
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -9,13 +10,15 @@ dp = Dispatcher(bot)
 
 # admin меню
 async def admin_page(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     await bot.send_message(callback_query.from_user.id, 'Кабинет администратора', reply_markup=get_admin_kb())
 
 
 # admin show psycho
 async def show_psycho(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con = get_data_base_object()
 
@@ -32,7 +35,8 @@ async def show_psycho(callback_query: types.CallbackQuery):
 
 # admin show psycho consultations
 async def show_psycho_consultations(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     psy_id = callback_query.data.split('_')[-1]
     con = get_data_base_object()
@@ -52,7 +56,8 @@ async def show_psycho_consultations(callback_query: types.CallbackQuery):
 
 # admin add psychologist
 async def admin_add_psycho(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     await bot.send_message(callback_query.from_user.id, 'Отправить данные одним сообщением вида:')
     await bot.send_message(callback_query.from_user.id,
@@ -66,7 +71,8 @@ async def admin_add_psycho(callback_query: types.CallbackQuery):
 
 # admin del psychologist
 async def admin_del_psycho(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     await bot.send_message(callback_query.from_user.id, 'Отправить данные одним сообщением вида:')
     await bot.send_message(callback_query.from_user.id, 'del/<telegram id>')
     await bot.send_message(callback_query.from_user.id,
@@ -76,7 +82,8 @@ async def admin_del_psycho(callback_query: types.CallbackQuery):
 
 # admin рассылка
 async def admin_sender(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     await bot.send_message(callback_query.from_user.id, 'Чтобы отправить сообщение всем пользователям, '
                                                         'напишите: all/текст сообщения')
     await bot.send_message(callback_query.from_user.id,

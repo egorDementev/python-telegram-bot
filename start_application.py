@@ -4,7 +4,7 @@ import aiogram.utils.exceptions
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
-    get_go_to_menu_kb, get_bot_token, get_super_admin_id
+    get_go_to_menu_kb, get_bot_token, get_super_admin_id, is_can_be_deleted
 from aiogram.types import InlineKeyboardMarkup
 from datetime import datetime
 
@@ -39,7 +39,8 @@ async def start(message: types.Message):
 
 # главное меню
 async def home_page(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     all_main_buttons = get_main_buttons_kb()
     con = get_data_base_object()
@@ -64,7 +65,8 @@ async def home_page(callback_query: types.CallbackQuery):
 
 # user account page
 async def user_account(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con = get_data_base_object()
 

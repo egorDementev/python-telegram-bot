@@ -1,7 +1,8 @@
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from data_provider import get_go_to_menu_kb, get_data_base_object, get_bot_token, get_psycho_kb, get_admin_list
+from data_provider import get_go_to_menu_kb, get_data_base_object, get_bot_token, get_psycho_kb, get_admin_list, \
+    is_can_be_deleted
 
 bot = Bot(token=get_bot_token())
 dp = Dispatcher(bot)
@@ -9,13 +10,15 @@ dp = Dispatcher(bot)
 
 # psycho меню
 async def psycho_page(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     await bot.send_message(callback_query.from_user.id, 'Кабинет психолога', reply_markup=get_psycho_kb())
 
 
 # all consults (psy page)
 async def psy_consults(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con = get_data_base_object()
     list_of_my_consults = []
@@ -57,7 +60,8 @@ async def psy_consults(callback_query: types.CallbackQuery):
 
 # mark consultation as done
 async def done_con(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con = get_data_base_object()
 
@@ -84,7 +88,8 @@ async def done_con(callback_query: types.CallbackQuery):
 
 # работает только для диагностических встреч
 async def change_date_time(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     con_id = callback_query.data.split('_')[-1]
 

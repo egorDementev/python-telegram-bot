@@ -4,7 +4,8 @@ from sqlite3 import OperationalError
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 
-from data_provider import get_data_base_object, get_go_to_menu_kb, get_bot_token, get_admin_list, get_super_admin_id
+from data_provider import get_data_base_object, get_go_to_menu_kb, get_bot_token, get_admin_list, get_super_admin_id, \
+    is_can_be_deleted
 from start_application import write_log_to_file
 
 bot = Bot(token=get_bot_token())
@@ -44,7 +45,8 @@ async def insert_into_tran(user_id, psy_id, count_consults, comment):
 
 # create tran (or diagnostic consult)
 async def create_tran(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     data = callback_query.data.split('_')
     psy_id = data[2]
@@ -127,7 +129,6 @@ async def create_consult(tran_id, user_id):
 
         await bot.send_message(get_super_admin_id(), error_text, reply_markup=None)
         await write_log_to_file('errors.txt', error_text)
-
 
 
 async def payment():

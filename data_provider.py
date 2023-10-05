@@ -1,3 +1,4 @@
+import datetime
 import os
 import sqlite3 as sl
 
@@ -151,9 +152,17 @@ def get_super_admin_id():
 
 # возвращает объект для работы с базой данных
 def get_data_base_object():
-    return sl.connect('resources/db//connection.db')
+    return sl.connect("resources/db//connection.db")
 
 
 # returns bot
 def get_bot_token() -> str:
     return os.getenv('TOKEN')
+
+
+def is_can_be_deleted(mess_date):
+    now = datetime.datetime.now()
+
+    if (now - mess_date).total_seconds() < 48 * 3600:
+        return True
+    return False

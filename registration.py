@@ -2,7 +2,8 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from database.work_with_db import if_register, add_new_person
-from data_provider import get_contract_kb, get_start_kb, get_go_to_menu_kb, get_bot_token, get_super_admin_id
+from data_provider import get_contract_kb, get_start_kb, get_go_to_menu_kb, get_bot_token, get_super_admin_id, \
+    is_can_be_deleted
 from datetime import datetime
 from start_application import write_log_to_file
 
@@ -27,7 +28,8 @@ async def send_agreement_message(cq, kb):
 
 # метод отправляет новым пользователям договор и согласие на обработку персональных данных
 async def attach(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     data = callback_query.data.split('_')
 
@@ -60,8 +62,9 @@ async def attach(callback_query: types.CallbackQuery):
 
 # регистрация пользователя, если его еще нет в базе данных
 async def start_bot(callback_query: types.CallbackQuery):
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
-    await callback_query.message.delete()
     if if_register(callback_query.from_user.id):
         await bot.send_message(callback_query.from_user.id, 'Вы уже зарегистрированы в боте ❤️',
                                reply_markup=get_go_to_menu_kb())
@@ -100,7 +103,8 @@ async def start_bot(callback_query: types.CallbackQuery):
 
 
 async def subscribe(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     message = 'Для дальнейшей работы с нашим ботом, тебе нужно подписаться на наш телеграм канал, в котором мы ' \
               'регулярно публикуем:\n🔹 ответы психологов на ваши вопросы\n🔹 советы по "выживанию" для студентов\n🔹 ' \
@@ -126,7 +130,8 @@ async def check_subscribe(callback_query: types.CallbackQuery):
 
 
 async def successful_subscribe(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
 
     await bot.send_message(callback_query.from_user.id, 'Спасибо ❤️\nТеперь можешь переходить в главное меню!',
                            reply_markup=get_go_to_menu_kb())

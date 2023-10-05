@@ -2,7 +2,7 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 
 from data_provider import get_go_to_menu_kb, get_data_base_object, get_check_up_kb, get_check_kb, get_questions, \
-    get_bot_token, get_super_admin_id
+    get_bot_token, get_super_admin_id, is_can_be_deleted
 from database.work_with_db import if_check, count_today_check_ups, write_check_up
 from draw import create_graphs, photo_del
 from datetime import datetime
@@ -14,7 +14,8 @@ dp = Dispatcher(bot)
 
 # меню с кнопками про чек-ап
 async def my_feeling(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     await callback_query.message.answer_photo(open("resources/pictures/check_up.png", "rb"),
                                               caption='Давай вспомним, как прошел твой день ❤️\n'
                                                       'Тут ты можешь порефлексировать и оценить свое состояние!\n\n'
@@ -43,7 +44,8 @@ async def send_check_ups(cq):
 
 # функция, которая отвечает за сбор данных о состоянии пользователя
 async def process_check_up(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     code = int(callback_query.data[3:])
     count = count_today_check_ups(callback_query.from_user.id)
     write_check_up(callback_query.from_user.id, code, count)
@@ -51,6 +53,7 @@ async def process_check_up(callback_query: types.CallbackQuery):
     if count < 6:
         await bot.send_message(callback_query.from_user.id, get_questions()[count], reply_markup=get_check_kb())
     else:
+        await bot.send_message(callback_query.from_user.id, "Бот строит графики, это займет несколько секунд ❤️")
         create_graphs(callback_query.from_user.id)
         media = types.MediaGroup()
         media.attach_photo(types.InputFile('resources/pictures/check_up.png'))
@@ -70,7 +73,8 @@ async def process_check_up(callback_query: types.CallbackQuery):
 
 # функция, которая отвечает за проверку, проходил ли человек чек-ап и вывод прошлых результатов
 async def is_check_up_done(callback_query: types.CallbackQuery):
-    await callback_query.message.delete()
+    if is_can_be_deleted(callback_query.message.date):
+        await callback_query.message.delete()
     code = callback_query.data[3:]
     if int(code) == 1:
         if if_check(callback_query.from_user.id):
@@ -87,6 +91,8 @@ async def is_check_up_done(callback_query: types.CallbackQuery):
         cursor.execute(sqlite_select_query)
         last_date = cursor.fetchall()
         if last_date:
+            await bot.send_message(callback_query.from_user.id, "Бот строит графики, это займет несколько секунд ❤️")
+
             create_graphs(callback_query.from_user.id)
 
             await send_check_ups(callback_query)
