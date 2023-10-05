@@ -4,7 +4,7 @@ import aiogram.utils.exceptions
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from data_provider import get_continue_kb, get_main_buttons_kb, get_admin_list, get_data_base_object, \
-    get_go_to_menu_kb, get_bot_token, get_super_admin_id, is_can_be_deleted
+    get_go_to_menu_kb, get_bot_token, get_super_admin_id, is_can_be_deleted, get_start_kb
 from aiogram.types import InlineKeyboardMarkup
 from datetime import datetime
 
@@ -28,7 +28,7 @@ async def start(message: types.Message):
                            'Для начала, давай познакомимся с возможностями этого бота!\n\n'
                            '‼️ Бот запущен в тестовом режиме, при возникновении каких-либо проблем просим писать '
                            'в тех.поддержку!!',
-                           reply_markup=get_continue_kb())
+                           reply_markup=get_start_kb())
     log_text = f"LOG: open_bot [{datetime.now().isoformat()}] " \
                f"UserID={message.from_user.id} " \
                f"UserURL={f'https://t.me/{message.from_user.username if message.from_user.username else None}'}"
@@ -234,7 +234,7 @@ async def set_date_time_of_consultation(con_id, date_time):
 async def send_message(data):
     user_id, text = data[1], data[2]
 
-    await bot.send_message(user_id, text)
+    await bot.send_message(user_id, text, reply_markup=get_start_kb())
 
 
 # обработка текстовых сообщений
